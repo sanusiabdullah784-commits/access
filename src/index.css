@@ -1,0 +1,14 @@
+@import "tailwindcss";
+
+@theme {
+  --color-brand-navy: #0B1E4B;
+  --color-brand-royal: #1A56DB;
+  --color-brand-cyan: #00A3FF;
+  --font-family-sans: 'Inter', sans-serif;
+}
+
+body {
+  font-family: var(--font-family-sans);
+  background-color: #ffffff;
+  color: var(--color-brand-navy);
+}
