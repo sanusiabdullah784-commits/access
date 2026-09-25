@@ -2,6 +2,7 @@ import { useState } from 'react';
 
 function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false); // NEW: Mobile menu state
 
   // Mock Data
   const stats = [
@@ -54,9 +55,19 @@ function AdminDashboard() {
 
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col">
-      <header className="bg-brand-navy text-white shadow-lg z-10">
+      <header className="bg-brand-navy text-white shadow-lg z-20 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-3">
+            {/* NEW: Mobile Hamburger Menu Button */}
+            <button 
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="md:hidden text-white focus:outline-none p-1 hover:bg-brand-royal/30 rounded-lg transition"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+              </svg>
+            </button>
+            
             <div className="w-8 h-8 bg-brand-cyan rounded-lg flex items-center justify-center font-black text-brand-navy">A</div>
             <h1 className="text-xl font-bold tracking-wide">ACCESS Lingua <span className="text-brand-cyan font-light">Admin</span></h1>
           </div>
@@ -64,7 +75,50 @@ function AdminDashboard() {
         </div>
       </header>
 
+      {/* NEW: Mobile Sidebar Overlay */}
+      {isMobileMenuOpen && (
+        <div className="fixed inset-0 z-50 md:hidden">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={() => setIsMobileMenuOpen(false)}
+          ></div>
+          
+          {/* Sidebar Panel */}
+          <div className="absolute left-0 top-0 bottom-0 w-64 bg-white shadow-2xl flex flex-col">
+            <div className="p-4 flex justify-between items-center border-b border-gray-100 bg-gray-50">
+              <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Administration</p>
+              <button onClick={() => setIsMobileMenuOpen(false)} className="text-gray-500 hover:text-gray-700 p-1">
+                <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex-grow overflow-y-auto py-4">
+              {tabs.map((tab) => (
+                <button 
+                  key={tab.id} 
+                  onClick={() => {
+                    setActiveTab(tab.id);
+                    setIsMobileMenuOpen(false); // Close menu on selection
+                  }} 
+                  className={`w-full text-left px-6 py-4 flex items-center space-x-3 transition border-l-4 ${
+                    activeTab === tab.id 
+                      ? 'bg-brand-royal/5 border-brand-royal text-brand-royal font-bold' 
+                      : 'border-transparent text-gray-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={tab.icon} /></svg>
+                  <span>{tab.label}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex-grow flex max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8 gap-8">
+        {/* Desktop Sidebar (hidden on mobile) */}
         <aside className="w-64 flex-shrink-0 hidden md:block">
           <div className="bg-white rounded-2xl shadow-md overflow-hidden sticky top-8">
             <div className="p-4 bg-gray-50 border-b border-gray-100"><p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Administration</p></div>
