@@ -1,5 +1,8 @@
 @import "tailwindcss";
 
+/* ✅ CRUCIAL FIX FOR TAILWIND V4 DARK MODE */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-brand-navy: #0B1E4B;
   --color-brand-royal: #1A56DB;
@@ -7,8 +10,45 @@
   --font-family-sans: 'Inter', sans-serif;
 }
 
+/* Custom Marquee Animation */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.animate-marquee {
+  animation: marquee 30s linear infinite;
+}
+
+/* Pause animation on hover for better readability */
+.animate-marquee:hover {
+  animation-play-state: paused;
+}
+
+/* Custom Floating Bubble Animation */
+@keyframes float-up {
+  0% {
+    transform: translateY(0) translateX(0);
+    opacity: 0;
+  }
+  10% {
+    opacity: 1;
+  }
+  90% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-120vh) translateX(30px);
+    opacity: 0;
+  }
+}
+
+.bubble {
+  animation: float-up linear infinite;
+}
+
 body {
   font-family: var(--font-family-sans);
-  background-color: #ffffff;
+  /* Removed hardcoded #ffffff background so dark mode classes (dark:bg-gray-900) can work properly */
   color: var(--color-brand-navy);
 }

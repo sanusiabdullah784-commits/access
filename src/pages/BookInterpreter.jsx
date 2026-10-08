@@ -9,13 +9,38 @@ function BookInterpreter() {
   const [selectedTime, setSelectedTime] = useState(null);
   const [duration, setDuration] = useState(60);
   const [isEmergency, setIsEmergency] = useState(false);
+  const [selectedLanguage, setSelectedLanguage] = useState('Mandarin Chinese'); // Default to Mandarin for demo
   
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [isPaymentOpen, setIsPaymentOpen] = useState(false);
   const [userEmail, setUserEmail] = useState('');
-  
   const [timeLeft, setTimeLeft] = useState(0);
+  
+  // State for Pre-Call Smart Briefing
+  const [briefingContext, setBriefingContext] = useState('');
+
+  // Mock data for matched interpreters based on language
+  const interpreterProfiles = {
+    'English': { name: 'Sarah Jenkins', rating: 4.9, sessions: 342, specialty: 'Business & Legal' },
+    'Igbo': { name: 'Chidi Okafor', rating: 5.0, sessions: 128, specialty: 'Medical & Community' },
+    'Mandarin Chinese': { name: 'Li Wei', rating: 4.9, sessions: 512, specialty: 'Corporate & Technical' },
+    'Pidgin English': { name: 'Emeka Nwosu', rating: 4.8, sessions: 215, specialty: 'General & Community' }
+  };
+
+  // --- NEW: DYNAMIC PER-MINUTE PRICING LOGIC ---
+  // Rates are hidden from public pages and only calculated here for the quote.
+  const rateMap = {
+    'Mandarin Chinese': 0.50,
+    'Igbo': 0.40,
+    'English': 0.50, // Default rate
+    'Pidgin English': 0.40 // Default rate
+  };
+  const currentRate = rateMap[selectedLanguage] || 0.50;
+  
+  const emergencyFee = isEmergency ? 20.00 : 0;
+  const subtotal = duration * currentRate;
+  const totalCost = subtotal + emergencyFee;
 
   const bookedSlots = ['09:00', '10:00', '14:00', '15:30'];
   const allSlots = [];
@@ -23,11 +48,6 @@ function BookInterpreter() {
     allSlots.push(`${i.toString().padStart(2, '0')}:00`);
     if (i !== 17) allSlots.push(`${i.toString().padStart(2, '0')}:30`);
   }
-
-  // Calculate total cost
-  const baseRate = 1; // $1 per minute
-  const emergencyFee = isEmergency ? 20 : 0;
-  const totalCost = (duration * baseRate) + emergencyFee;
 
   useEffect(() => {
     if (!isSessionActive || timeLeft <= 0) return;
@@ -41,9 +61,44 @@ function BookInterpreter() {
     return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  const handleCopyLink = () => {
+    const mockLink = `https://accesslingua.com/session/${Date.now().toString(36).toUpperCase()}`;
+    navigator.clipboard.writeText(mockLink).then(() => {
+      alert("Secure guest link copied to clipboard! You can now share this with your client.");
+    });
+  };
+
+  const handleDownloadCalendar = () => {
+    const eventDate = new Date(); 
+    const endDate = new Date(eventDate.getTime() + duration * 60000);
+    const formatICSDate = (date) => date.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+
+    const icsContent = `BEGIN:VCALENDAR
+VERSION:2.0
+PRODID:-//Access Lingua//EN
+BEGIN:VEVENT
+SUMMARY:Interpretation Session (${selectedLanguage})
+DTSTART:${formatICSDate(eventDate)}
+DTEND:${formatICSDate(endDate)}
+DESCRIPTION:Professional Interpretation Session booked via Access Lingua. Briefing: ${briefingContext || 'None provided.'}
+LOCATION:Virtual / Access Lingua Platform
+END:VEVENT
+END:VCALENDAR`;
+
+    const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'access-lingua-appointment.ics');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   const handleConfirmBooking = () => {
     if (selectedDate && selectedTime) {
-      setIsPaymentOpen(true); // Open Payment Modal first!
+      setIsPaymentOpen(true);
     } else {
       alert("Please select a date and an available time slot!");
     }
@@ -51,7 +106,7 @@ function BookInterpreter() {
 
   const handlePaymentSuccess = () => {
     setIsPaymentOpen(false);
-    setShowSuccessModal(true); // Show success modal after payment
+    setShowSuccessModal(true);
   };
 
   const proceedToSession = () => {
@@ -107,16 +162,15 @@ function BookInterpreter() {
     <div className="min-h-screen bg-white flex flex-col">
       <Navbar />
       
-      {/* Payment Modal */}
       <PaymentModal 
         isOpen={isPaymentOpen} 
         onClose={() => setIsPaymentOpen(false)} 
         amount={totalCost.toFixed(2)} 
-        purpose="Interpreter Appointment" 
-        onSuccess={handlePaymentSuccess} // We need to pass this prop to PaymentModal!
+        purpose={`Interpretation Quote (${selectedLanguage})`} 
+        onSuccess={handlePaymentSuccess}
       />
 
-      {/* SUCCESS MODAL (Email & Reminders) */}
+      {/* SUCCESS MODAL */}
       {showSuccessModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn">
           <div className="bg-white rounded-3xl shadow-2xl max-w-lg w-full p-8 text-center relative">
@@ -133,6 +187,39 @@ function BookInterpreter() {
             
             <h2 className="text-2xl font-bold text-brand-navy mb-2">Booking Confirmed!</h2>
             <p className="text-gray-500 mb-6">Your interpreter is scheduled and ready.</p>
+
+            {/* NEW: Professional Quote Breakdown in Receipt */}
+            <div className="bg-gray-50 border border-gray-200 rounded-2xl p-5 text-left mb-6">
+              <h4 className="font-bold text-brand-navy text-sm uppercase tracking-wider mb-3 border-b border-gray-200 pb-2">Quote Breakdown</h4>
+              <div className="space-y-2 text-sm">
+                <div className="flex justify-between text-gray-600">
+                  <span>Language Pair:</span>
+                  <span className="font-medium text-gray-800">{selectedLanguage} ↔ English</span>
+                </div>
+                <div className="flex justify-between text-gray-600">
+                  <span>Duration:</span>
+                  <span className="font-medium text-gray-800">{duration} minutes</span>
+                </div>
+                <div className="flex justify-between text-gray-600">
+                  <span>Rate:</span>
+                  <span className="font-medium text-gray-800">${currentRate.toFixed(2)} / min</span>
+                </div>
+                <div className="flex justify-between text-gray-600">
+                  <span>Subtotal:</span>
+                  <span className="font-medium text-gray-800">${subtotal.toFixed(2)}</span>
+                </div>
+                {isEmergency && (
+                  <div className="flex justify-between text-red-600">
+                    <span>Emergency Fee:</span>
+                    <span className="font-medium">${emergencyFee.toFixed(2)}</span>
+                  </div>
+                )}
+                <div className="flex justify-between text-brand-navy font-bold text-base pt-2 border-t border-gray-200 mt-2">
+                  <span>Total Paid:</span>
+                  <span>${totalCost.toFixed(2)}</span>
+                </div>
+              </div>
+            </div>
 
             <div className="bg-gray-50 rounded-2xl p-6 text-left space-y-4 mb-6">
               <div className="flex items-start space-x-3">
@@ -154,9 +241,26 @@ function BookInterpreter() {
               </div>
             </div>
 
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-6">
+              <button 
+                onClick={handleDownloadCalendar}
+                className="flex items-center justify-center space-x-2 bg-white border-2 border-brand-royal text-brand-royal hover:bg-brand-royal hover:text-white font-bold py-3 rounded-xl transition"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                <span>Add to Calendar</span>
+              </button>
+              <button 
+                onClick={handleCopyLink}
+                className="flex items-center justify-center space-x-2 bg-white border-2 border-brand-cyan text-brand-cyan hover:bg-brand-cyan hover:text-white font-bold py-3 rounded-xl transition"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                <span>Copy Guest Link</span>
+              </button>
+            </div>
+
             <button 
               onClick={proceedToSession}
-              className="w-full bg-brand-royal hover:bg-brand-navy text-white font-bold py-3 rounded-full transition shadow-lg text-lg"
+              className="w-full bg-brand-navy hover:bg-brand-royal text-white font-bold py-3 rounded-full transition shadow-lg text-lg"
             >
               Proceed to Live Session
             </button>
@@ -294,12 +398,15 @@ function BookInterpreter() {
                     <div className="grid md:grid-cols-2 gap-6">
                       <div>
                         <label className="block text-gray-700 font-medium mb-2">Language Needed</label>
-                        <select className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-royal bg-white">
-                          <option>Spanish</option>
-                          <option>French</option>
+                        <select 
+                          value={selectedLanguage}
+                          onChange={(e) => setSelectedLanguage(e.target.value)}
+                          className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-royal bg-white"
+                        >
                           <option>Mandarin Chinese</option>
-                          <option>Arabic</option>
-                          <option>Other</option>
+                          <option>Igbo</option>
+                          <option>English</option>
+                          <option>Pidgin English</option>
                         </select>
                       </div>
                       <div>
@@ -312,10 +419,86 @@ function BookInterpreter() {
                       </div>
                     </div>
 
-                    {/* Total Cost Display */}
-                    <div className="bg-gray-50 p-4 rounded-xl flex justify-between items-center border border-gray-200">
-                      <span className="text-gray-600 font-medium">Estimated Total:</span>
-                      <span className="text-2xl font-black text-brand-navy">${totalCost.toFixed(2)}</span>
+                    {/* Meet Your Matched Interpreter Live Preview Card */}
+                    <div className="bg-gradient-to-br from-brand-navy to-brand-royal rounded-xl p-6 text-white shadow-lg transition-all duration-500">
+                      <div className="flex items-center space-x-4">
+                        <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center text-2xl font-bold border-2 border-white/30 backdrop-blur-sm">
+                          {interpreterProfiles[selectedLanguage].name.charAt(0)}
+                        </div>
+                        <div className="flex-grow">
+                          <h4 className="font-bold text-lg flex items-center">
+                            Meet Your Matched Interpreter
+                            <span className="ml-2 w-2 h-2 bg-green-400 rounded-full animate-pulse"></span>
+                          </h4>
+                          <p className="text-blue-200 text-sm font-medium">{interpreterProfiles[selectedLanguage].name}</p>
+                          <div className="flex items-center space-x-3 mt-1 text-sm">
+                            <span className="flex items-center text-yellow-400 font-bold">
+                              <svg className="w-4 h-4 mr-1" fill="currentColor" viewBox="0 0 20 20"><path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/></svg>
+                              {interpreterProfiles[selectedLanguage].rating}
+                            </span>
+                            <span className="text-blue-300">•</span>
+                            <span className="text-blue-100">{interpreterProfiles[selectedLanguage].sessions}+ Sessions</span>
+                          </div>
+                        </div>
+                        <div className="text-right hidden sm:block">
+                          <span className="inline-block bg-white/20 px-3 py-1.5 rounded-lg text-xs font-semibold backdrop-blur-sm border border-white/10">
+                            {interpreterProfiles[selectedLanguage].specialty}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* PRE-CALL SMART BRIEFING CONTEXT BOX */}
+                    <div className="bg-brand-navy/5 border border-brand-royal/20 rounded-xl p-5">
+                      <div className="flex items-start space-x-3 mb-3">
+                        <svg className="w-6 h-6 text-brand-royal flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z" />
+                        </svg>
+                        <div>
+                          <h4 className="font-bold text-brand-navy">Pre-Call Smart Briefing (Optional but Recommended)</h4>
+                          <p className="text-sm text-gray-600">Help your interpreter prepare by providing key terms, participant names, or meeting context.</p>
+                        </div>
+                      </div>
+                      <textarea
+                        value={briefingContext}
+                        onChange={(e) => setBriefingContext(e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-royal bg-white resize-none transition"
+                        rows="3"
+                        placeholder="e.g., 'Discussing MRI results for John Doe' or 'Legal terms: Affidavit, Deposition'..."
+                      ></textarea>
+                    </div>
+
+                    {/* NEW: PROFESSIONAL QUOTE BREAKDOWN */}
+                    <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6">
+                      <h4 className="font-bold text-brand-navy text-sm uppercase tracking-wider mb-4 border-b border-gray-200 pb-2">Your Quote</h4>
+                      <div className="space-y-3 text-sm">
+                        <div className="flex justify-between text-gray-600">
+                          <span>Language Pair:</span>
+                          <span className="font-medium text-gray-800">{selectedLanguage} ↔ English</span>
+                        </div>
+                        <div className="flex justify-between text-gray-600">
+                          <span>Duration:</span>
+                          <span className="font-medium text-gray-800">{duration} minutes</span>
+                        </div>
+                        <div className="flex justify-between text-gray-600">
+                          <span>Rate:</span>
+                          <span className="font-medium text-gray-800">${currentRate.toFixed(2)} / min</span>
+                        </div>
+                        <div className="flex justify-between text-gray-600">
+                          <span>Subtotal:</span>
+                          <span className="font-medium text-gray-800">${subtotal.toFixed(2)}</span>
+                        </div>
+                        {isEmergency && (
+                          <div className="flex justify-between text-red-600">
+                            <span>Emergency Fee:</span>
+                            <span className="font-medium">${emergencyFee.toFixed(2)}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between text-brand-navy font-bold text-xl pt-3 border-t border-gray-200 mt-3">
+                          <span>Total:</span>
+                          <span>${totalCost.toFixed(2)}</span>
+                        </div>
+                      </div>
                     </div>
 
                     <button 

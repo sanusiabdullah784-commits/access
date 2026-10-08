@@ -1,6 +1,8 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import ScrollToTop from './components/ScrollToTop';
-import WhatsAppButton from './components/WhatsAppButton'; // <-- ADDED
+import WhatsAppButton from './components/WhatsAppButton';
+import AIChatWidget from './components/AIChatWidget'; // <-- ADDED: Import AI Chat Widget
+
 import HomePage from './pages/HomePage';
 import AboutUs from './pages/AboutUs';
 import Services from './pages/Services';
@@ -56,8 +58,10 @@ function App() {
         <Route path="/blog" element={<Blog />} />
         <Route path="/call-interpreter" element={<CallInterpreter />} />
       </Routes>
-      {/* ADDED GLOBAL WHATSAPP BUTTON */}
+      
+      {/* GLOBAL FLOATING WIDGETS */}
       <WhatsAppButton /> 
+      <AIChatWidget /> {/* <-- ADDED: Renders globally on all pages */}
     </Router>
   );
 }

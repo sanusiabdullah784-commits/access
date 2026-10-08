@@ -21,7 +21,5 @@ export default defineConfig({
   build: {
     // Optimize build for production (SEO & Performance)
     sourcemap: false
-    // Removed manualChunks to prevent Rolldown/Vite 8+ type errors. 
-    // Vite's default code-splitting is already highly optimized!
   }
 })
