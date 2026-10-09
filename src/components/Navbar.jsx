@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
-import { useTheme } from '../context/ThemeContext'; // <-- ADDED: Import Theme Context
+import { useTheme } from '../context/ThemeContext';
 import logo from '../assets/logo.png'; 
 
 function Navbar() {
@@ -11,7 +11,7 @@ function Navbar() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   
   const location = useLocation();
-  const { theme, toggleTheme } = useTheme(); // <-- ADDED: Get theme state and toggle function
+  const { theme, toggleTheme } = useTheme();
 
   // 1. Scroll Glassmorphism & Shrink
   useEffect(() => {
@@ -37,7 +37,7 @@ function Navbar() {
     return () => subscription.unsubscribe();
   }, []);
 
-  // 3. Helper for Active Route Highlighting (Updated with dark mode colors)
+  // 3. Helper for Active Route Highlighting
   const isActive = (path) => location.pathname === path;
   const activeClass = "text-brand-royal dark:text-brand-cyan font-bold border-b-2 border-brand-royal dark:border-brand-cyan";
   const inactiveClass = "text-gray-700 dark:text-gray-300 hover:text-brand-royal dark:hover:text-brand-cyan font-medium transition border-b-2 border-transparent";
@@ -64,8 +64,8 @@ function Navbar() {
   );
 
   return (
-    // UPDATED: Added dark mode background and shadow colors
-    <nav className={`sticky top-0 z-50 transition-all duration-300 ${
+    // FIXED: Changed from 'sticky' to 'fixed top-0 left-0 right-0 w-full' to guarantee it never disappears
+    <nav className={`fixed top-0 left-0 right-0 w-full z-50 transition-all duration-300 ${
       isScrolled 
         ? 'h-20 bg-white/90 dark:bg-gray-900/90 backdrop-blur-md shadow-sm dark:shadow-gray-800/50' 
         : 'h-36 bg-white dark:bg-gray-900 shadow-md dark:shadow-gray-800/50'
@@ -89,17 +89,15 @@ function Navbar() {
             <Link to="/services" className={`${isActive('/services') ? activeClass : inactiveClass} py-1`}>Services</Link>
             <Link to="/contact" className={`${isActive('/contact') ? activeClass : inactiveClass} py-1`}>Contact</Link>
             
-            {/* 4. Rich Mega Menu */}
+            {/* Rich Mega Menu */}
             <div className="relative group">
               <button className={`${isActive('/plans') || isActive('/video-booking') || isActive('/client-dashboard') ? activeClass : inactiveClass} py-1 flex items-center space-x-1`}>
                 <span>More</span>
                 <svg className={`w-4 h-4 transition-transform group-hover:rotate-180`} fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
               </button>
               
-              {/* UPDATED: Dark mode styling for Mega Menu Dropdown */}
               <div className="absolute top-full left-1/2 -translate-x-1/2 mt-4 w-[500px] bg-white dark:bg-gray-800 shadow-2xl rounded-2xl p-6 border border-gray-100 dark:border-gray-700 opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 transform group-hover:translate-y-0 translate-y-2">
                 <div className="grid grid-cols-2 gap-6">
-                  {/* Column 1: Platform */}
                   <div>
                     <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Platform</h4>
                     <ul className="space-y-1">
@@ -109,7 +107,6 @@ function Navbar() {
                       <li><Link to="/wallet" className="flex items-center space-x-3 p-2 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 text-gray-700 dark:text-gray-300 hover:text-brand-royal dark:hover:text-brand-cyan transition"><svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg><span>Wallet</span></Link></li>
                     </ul>
                   </div>
-                  {/* Column 2: Resources */}
                   <div>
                     <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Resources</h4>
                     <ul className="space-y-1">
@@ -130,7 +127,6 @@ function Navbar() {
 
           {/* Desktop Primary Actions / Auth Profile & Theme Toggle */}
           <div className="hidden md:flex items-center space-x-4">
-            {/* NEW: Theme Toggle Button */}
             <ThemeToggle />
 
             {user ? (
@@ -184,12 +180,10 @@ function Navbar() {
           </div>
         </div>
 
-        {/* 5. Organized Mobile Menu */}
+        {/* Organized Mobile Menu */}
         {isOpen && (
           <div className="md:hidden absolute top-full left-0 w-full bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 shadow-xl max-h-[80vh] overflow-y-auto z-40">
             <div className="p-6 space-y-6">
-              
-              {/* Mobile Primary Actions */}
               <div className="space-y-3 pb-6 border-b border-gray-200 dark:border-gray-700">
                 <Link to="/call-interpreter" onClick={() => setIsOpen(false)} className="block w-full text-center border-2 border-brand-navy dark:border-white text-brand-navy dark:text-white font-bold py-3 rounded-full flex items-center justify-center space-x-2">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
@@ -200,7 +194,6 @@ function Navbar() {
                 </Link>
               </div>
 
-              {/* Mobile Navigation Groups */}
               <div>
                 <h4 className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-3">Company</h4>
                 <div className="space-y-1">

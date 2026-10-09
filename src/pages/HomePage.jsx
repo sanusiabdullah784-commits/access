@@ -58,7 +58,8 @@ function HomePage() {
   };
 
   return (
-    <div className="min-h-screen bg-white flex flex-col relative overflow-hidden">
+    // FIXED: Added pt-36 to push all content down below the fixed Navbar
+    <div className="min-h-screen bg-white flex flex-col relative overflow-hidden pt-36">
       <Helmet>
         <title>Home | Access Lingua - Professional Interpretation Services</title>
         <meta name="description" content="Welcome to Access Lingua. Bridge spoken language barriers with our certified 24/7 video, phone, and in-person interpretation services." />
@@ -73,7 +74,7 @@ function HomePage() {
         <section className="bg-gradient-to-br from-brand-navy via-brand-royal to-brand-cyan text-white py-24">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             
-            {/* UPDATED: Live Interpreter Availability Pulse Badge (Adjusted to 7) */}
+            {/* Live Interpreter Availability Pulse Badge */}
             <div className="inline-flex items-center bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-5 py-2 mb-8 shadow-lg">
               <span className="relative flex h-3 w-3 mr-3">
                 <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
