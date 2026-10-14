@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import Navbar from '../components/Navbar';
@@ -8,54 +7,33 @@ import Marquee from '../components/Marquee';
 import FloatingBubbles from '../components/FloatingBubbles';
 
 function HomePage() {
-  // State to track which language is currently playing audio
-  const [playingLang, setPlayingLang] = useState(null);
-
-  // Native greetings for the 4 core languages
-  const languageGreetings = [
+  // NEW: Core Languages Data (Replaced audio with informative specialty cards)
+  const coreLanguages = [
     { 
       name: 'English', 
-      text: 'Hello, welcome to Access Lingua.', 
-      langCode: 'en-US' 
+      flag: '🇬🇧',
+      specialty: 'Global Business & Legal',
+      description: 'Flawless interpretation for international corporate meetings and legal proceedings.'
     },
     { 
       name: 'Igbo', 
-      text: 'Kedu ka ị mere? Nnọọ na Access Lingua.', 
-      langCode: 'ig-NG' 
+      flag: '🇳🇬',
+      specialty: 'Healthcare & Community',
+      description: 'Native-speaking experts ensuring accurate medical and community dialogue.'
     },
     { 
       name: 'Mandarin Chinese', 
-      text: 'Nǐ hǎo, huānyíng lái dào Access Lingua.', 
-      langCode: 'zh-CN' 
+      flag: '🇨🇳',
+      specialty: 'Corporate & Technical',
+      description: 'Bridging the gap for international trade, tech, and high-stakes negotiations.'
     },
     { 
       name: 'Pidgin English', 
-      text: 'How far? Welcome to Access Lingua.', 
-      langCode: 'en-NG' 
+      flag: '🇳🇬',
+      specialty: 'Broad Accessibility',
+      description: 'Connecting with everyday speakers through natural, culturally fluent communication.'
     }
   ];
-
-  // Function to handle native browser text-to-speech
-  const handlePlayGreeting = (langName, text, langCode) => {
-    window.speechSynthesis.cancel();
-
-    if (playingLang === langName) {
-      setPlayingLang(null);
-      return;
-    }
-
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.lang = langCode;
-    utterance.rate = 0.9;
-    utterance.pitch = 1;
-
-    utterance.onend = () => {
-      setPlayingLang(null);
-    };
-
-    setPlayingLang(langName);
-    window.speechSynthesis.speak(utterance);
-  };
 
   return (
     // FIXED: Added pt-36 to push all content down below the fixed Navbar
@@ -74,17 +52,6 @@ function HomePage() {
         <section className="bg-gradient-to-br from-brand-navy via-brand-royal to-brand-cyan text-white py-24">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             
-            {/* Live Interpreter Availability Pulse Badge */}
-            <div className="inline-flex items-center bg-white/10 backdrop-blur-md border border-white/20 rounded-full px-5 py-2 mb-8 shadow-lg">
-              <span className="relative flex h-3 w-3 mr-3">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75"></span>
-                <span className="relative inline-flex rounded-full h-3 w-3 bg-green-500"></span>
-              </span>
-              <span className="text-sm font-semibold text-white tracking-wide">
-                7 Certified Interpreters Online Now
-              </span>
-            </div>
-
             <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight">
               Bridging Languages<br />
               <span className="text-brand-cyan">Connecting People</span>
@@ -123,65 +90,64 @@ function HomePage() {
             <h2 className="text-4xl font-bold text-center text-brand-navy mb-16">Why Choose Access Lingua?</h2>
             <div className="grid md:grid-cols-3 gap-8">
               
-              {/* Interactive "Hear Our Languages" Card */}
-              <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition border-t-4 border-brand-cyan">
+              {/* NEW: Interactive "Our Core Languages" Card */}
+              <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition border-t-4 border-brand-cyan md:col-span-1">
                 <div className="w-16 h-16 bg-brand-cyan rounded-full flex items-center justify-center mb-4">
                   <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5h12M9 3v2m1.048 9.5A18.022 18.022 0 016.412 9m6.088 9h7M11 21l5-10 5 10M12.751 5C11.783 10.77 8.07 15.61 3 18.129" />
                   </svg>
                 </div>
-                <h3 className="text-2xl font-bold text-brand-navy mb-3">4 Core Languages</h3>
-                <p className="text-gray-600 mb-4">Expert interpretation with native-speaking professionals.</p>
+                <h3 className="text-2xl font-bold text-brand-navy mb-2">4 Core Languages</h3>
+                <p className="text-gray-600 mb-6">Expert interpretation with native-speaking professionals.</p>
                 
-                <div className="space-y-3 mt-4">
-                  {languageGreetings.map((lang) => (
-                    <button
+                {/* NEW: 2x2 Grid of Language Specialty Cards */}
+                <div className="grid grid-cols-1 gap-3">
+                  {coreLanguages.map((lang) => (
+                    <div 
                       key={lang.name}
-                      onClick={() => handlePlayGreeting(lang.name, lang.text, lang.langCode)}
-                      className={`w-full flex items-center justify-between p-3 rounded-xl transition-all duration-300 ${
-                        playingLang === lang.name 
-                          ? 'bg-brand-cyan/10 border border-brand-cyan' 
-                          : 'bg-gray-50 hover:bg-gray-100 border border-transparent'
-                      }`}
+                      className="group flex items-start space-x-3 p-3 rounded-xl bg-gray-50 hover:bg-brand-royal/5 border border-transparent hover:border-brand-royal/20 transition-all duration-300"
                     >
-                      <span className={`font-semibold ${playingLang === lang.name ? 'text-brand-cyan' : 'text-gray-700'}`}>
-                        {lang.name}
-                      </span>
-                      <div className={`w-8 h-8 rounded-full flex items-center justify-center transition-all ${
-                        playingLang === lang.name 
-                          ? 'bg-brand-cyan text-white animate-pulse' 
-                          : 'bg-white text-brand-cyan shadow-sm'
-                      }`}>
-                        {playingLang === lang.name ? (
-                          <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="2" /></svg>
-                        ) : (
-                          <svg className="w-4 h-4 ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
-                        )}
+                      <span className="text-2xl flex-shrink-0 mt-0.5">{lang.flag}</span>
+                      <div>
+                        <h4 className="font-bold text-brand-navy group-hover:text-brand-royal transition">
+                          {lang.name}
+                        </h4>
+                        <p className="text-xs font-semibold text-brand-cyan uppercase tracking-wide mb-1">
+                          {lang.specialty}
+                        </p>
+                        <p className="text-xs text-gray-600 leading-relaxed">
+                          {lang.description}
+                        </p>
                       </div>
-                    </button>
+                    </div>
                   ))}
                 </div>
               </div>
               
-              <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition">
-                <div className="w-16 h-16 bg-brand-royal rounded-full flex items-center justify-center mb-4">
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
-                  </svg>
+              <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition md:col-span-2 flex flex-col justify-center">
+                <div className="grid md:grid-cols-2 gap-8 h-full">
+                  <div>
+                    <div className="w-16 h-16 bg-brand-royal rounded-full flex items-center justify-center mb-4">
+                      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-2xl font-bold text-brand-navy mb-3">Lightning Fast</h3>
+                    <p className="text-gray-600">Instant connections to certified interpreters without compromising on quality and accuracy.</p>
+                  </div>
+                  
+                  <div>
+                    <div className="w-16 h-16 bg-brand-navy rounded-full flex items-center justify-center mb-4">
+                      <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                      </svg>
+                    </div>
+                    <h3 className="text-2xl font-bold text-brand-navy mb-3">Certified Accuracy</h3>
+                    <p className="text-gray-600">Highly trained interpreters you can trust for legal, medical, and business conversations.</p>
+                  </div>
                 </div>
-                <h3 className="text-2xl font-bold text-brand-navy mb-3">Lightning Fast</h3>
-                <p className="text-gray-600">Instant connections to certified interpreters without compromising on quality and accuracy.</p>
               </div>
-              
-              <div className="bg-white p-8 rounded-2xl shadow-lg hover:shadow-2xl transition">
-                <div className="w-16 h-16 bg-brand-navy rounded-full flex items-center justify-center mb-4">
-                  <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                  </svg>
-                </div>
-                <h3 className="text-2xl font-bold text-brand-navy mb-3">Certified Accuracy</h3>
-                <p className="text-gray-600">Highly trained interpreters you can trust for legal, medical, and business conversations.</p>
-              </div>
+
             </div>
 
             {/* SUBTLE TRANSLATION MENTION */}

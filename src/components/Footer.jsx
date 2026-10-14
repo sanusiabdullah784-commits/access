@@ -107,7 +107,7 @@ function Footer() {
               </li>
               <li className="flex items-start space-x-2">
                 <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8.5 11a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm5 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-5 4a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm5 0a1 1 0 1 0 0-2 1 1 0 0 0 0 2zm-3.5-13C4.48 2 0 5.58 0 10c0 2.4 1.28 4.56 3.3 6.08L2 20l4.2-2.1c1.14.32 2.36.5 3.64.5.17 0 .34 0 .5-.01C10.16 18.13 10 17.83 10 17.5c0-4.14 4.03-7.5 9-7.5.34 0 .67.02 1 .05C19.36 5.63 15.28 2 10 2z"/></svg>
-                <span>WeChat: <span className="font-mono font-bold text-white">AccesLinguaHQ</span></span>
+                <span>WeChat: <span className="font-mono font-bold text-white">AccessLinguaHQ</span></span>
               </li>
               <li className="flex items-start space-x-2">
                 <svg className="w-5 h-5 flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>

@@ -30,10 +30,10 @@ function ContactUs() {
           <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="grid md:grid-cols-3 gap-8">
               
-              {/* Contact Info, Addresses & WeChat */}
+              {/* Contact Info & WeChat */}
               <div className="md:col-span-1 space-y-6">
                 
-                {/* Contact Information & Addresses */}
+                {/* Contact Information */}
                 <div className="bg-white rounded-2xl shadow-md p-6">
                   <h3 className="text-xl font-bold text-brand-navy mb-4">Contact Information</h3>
                   <ul className="space-y-5">
@@ -51,16 +51,6 @@ function ContactUs() {
                         <p className="text-gray-600">support@accesslingua.com</p>
                       </div>
                     </li>
-                    <li className="flex items-start space-x-3">
-                      <svg className="w-6 h-6 text-brand-royal flex-shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
-                      <div>
-                        <p className="font-bold text-gray-800 mb-1">Office Locations</p>
-                        <p className="text-gray-600 text-sm leading-relaxed">
-                          1. Lagos State, Nigeria<br />
-                          2. 39 Salami Shuaibu Street, Pedro, Lagos State, Nigeria.
-                        </p>
-                      </div>
-                    </li>
                   </ul>
                 </div>
 
@@ -76,7 +66,7 @@ function ContactUs() {
                     </div>
                     <div>
                       <p className="text-sm text-gray-500 mb-1">Search or add ID:</p>
-                      <p className="text-lg font-mono font-bold text-gray-800 break-all">AccesLinguaHQ</p>
+                      <p className="text-lg font-mono font-bold text-gray-800 break-all">AccessLinguaHQ</p>
                     </div>
                   </div>
                 </div>
