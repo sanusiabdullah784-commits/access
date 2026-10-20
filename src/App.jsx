@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import ScrollToTop from './components/ScrollToTop';
 import WhatsAppButton from './components/WhatsAppButton';
-import AIChatWidget from './components/AIChatWidget'; // <-- ADDED: Import AI Chat Widget
+import AIChatWidget from './components/AIChatWidget';
 
 import HomePage from './pages/HomePage';
 import AboutUs from './pages/AboutUs';
@@ -27,6 +27,8 @@ import TermsConditions from './pages/TermsConditions';
 import Careers from './pages/Careers';
 import Blog from './pages/Blog';
 import CallInterpreter from './pages/CallInterpreter';
+import Login from './pages/Login';
+import Register from './pages/Register'; // <-- ADDED: Import Register Page
 
 function App() {
   return (
@@ -57,11 +59,13 @@ function App() {
         <Route path="/careers" element={<Careers />} />
         <Route path="/blog" element={<Blog />} />
         <Route path="/call-interpreter" element={<CallInterpreter />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/register" element={<Register />} /> {/* <-- ADDED: Register Route */}
       </Routes>
       
       {/* GLOBAL FLOATING WIDGETS */}
       <WhatsAppButton /> 
-      <AIChatWidget /> {/* <-- ADDED: Renders globally on all pages */}
+      <AIChatWidget />
     </Router>
   );
 }
