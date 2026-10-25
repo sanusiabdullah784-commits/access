@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom'; // <-- ADDED: For linking to blog posts
 import { supabase } from '../lib/supabaseClient';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -9,7 +10,7 @@ function Blog() {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [newsletterEmail, setNewsletterEmail] = useState('');
-  const [newsletterStatus, setNewsletterStatus] = useState('idle'); // 'idle', 'success', 'error'
+  const [newsletterStatus, setNewsletterStatus] = useState('idle'); // 'idle', 'loading', 'success', 'error'
 
   // Brand-aligned categories
   const categories = ['All', 'Industry News', 'Interpretation Best Practices', 'Company Updates', 'Case Studies', 'Language Insights'];
@@ -25,10 +26,10 @@ function Blog() {
         .order('created_at', { ascending: false });
 
       if (error || !data || data.length === 0) {
-        // Fallback to brand-aligned mock data
+        // Fallback to brand-aligned mock data (Remove this block once you add real posts to Supabase)
         setPosts([
           {
-            id: 1,
+            id: '1',
             title: "The Future of AI in Human Interpretation: A Perfect Synergy",
             category: "Industry News",
             date: "Sep 10, 2026",
@@ -42,7 +43,7 @@ function Blog() {
             is_featured: true
           },
           {
-            id: 2,
+            id: '2',
             title: "5 Common Mistakes in Legal Interpretation and How to Avoid Them",
             category: "Interpretation Best Practices",
             date: "Sep 08, 2026",
@@ -55,7 +56,7 @@ function Blog() {
             color: "from-brand-royal to-brand-cyan"
           },
           {
-            id: 3,
+            id: '3',
             title: "How We Helped City General Hospital Reduce Patient Wait Times by 40%",
             category: "Case Studies",
             date: "Sep 05, 2026",
@@ -66,58 +67,6 @@ function Blog() {
             views: 3100,
             comments: 24,
             color: "from-brand-navy to-brand-royal"
-          },
-          {
-            id: 4,
-            title: "Access Lingua Wins 'Best Interpretation Service Provider' 2026",
-            category: "Company Updates",
-            date: "Sep 01, 2026",
-            readTime: "4 min read",
-            summary: "We are thrilled to announce that Access Lingua has been recognized as the top interpretation service provider at the Global Language Industry Awards.",
-            author: "Sarah Jenkins",
-            authorRole: "CEO & Founder",
-            views: 4200,
-            comments: 31,
-            color: "from-brand-cyan to-brand-navy"
-          },
-          {
-            id: 5,
-            title: "Why Pidgin English Interpretation Requires Specialized Training",
-            category: "Language Insights",
-            date: "Aug 28, 2026",
-            readTime: "7 min read",
-            summary: "Pidgin English is far more than 'broken English.' Explore the linguistic complexity and cultural nuances that make it a unique interpretation challenge.",
-            author: "Emeka Nwosu",
-            authorRole: "Senior Pidgin Linguist",
-            views: 1560,
-            comments: 9,
-            color: "from-brand-royal to-brand-navy"
-          },
-          {
-            id: 6,
-            title: "The Rise of Video Interpretation in Healthcare: 2026 Trends",
-            category: "Industry News",
-            date: "Aug 25, 2026",
-            readTime: "9 min read",
-            summary: "Telehealth is booming, and VRI is at the forefront. Here are the key trends shaping how hospitals deliver multilingual care this year.",
-            author: "Dr. Sarah Thompson",
-            authorRole: "Chief Innovation Officer",
-            views: 2780,
-            comments: 15,
-            color: "from-brand-navy to-brand-cyan"
-          },
-          {
-            id: 7,
-            title: "Mandarin Interpretation: Navigating Tonal Complexity in Medical Settings",
-            category: "Language Insights",
-            date: "Aug 20, 2026",
-            readTime: "11 min read",
-            summary: "A single mispronounced tone can change a diagnosis. Learn how our certified Mandarin interpreters ensure precision in high-stakes medical conversations.",
-            author: "Li Wei",
-            authorRole: "Lead Mandarin Interpreter",
-            views: 2100,
-            comments: 14,
-            color: "from-brand-cyan to-brand-royal"
           }
         ]);
       } else {
@@ -178,7 +127,8 @@ function Blog() {
   const relatedPosts = posts.filter(p => p.id !== featuredPost?.id && p.category === featuredPost?.category).slice(0, 2);
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    // FIXED: Added pt-36 to push content down below the fixed Navbar
+    <div className="min-h-screen bg-white flex flex-col pt-36">
       <Navbar />
       
       <main className="flex-grow">
@@ -249,9 +199,9 @@ function Blog() {
                     </span>
                   </div>
                   
-                  <button className="bg-brand-royal hover:bg-brand-navy text-white px-6 py-3 rounded-full font-bold transition shadow-lg w-fit">
+                  <Link to={`/blog/${featuredPost.id}`} className="bg-brand-royal hover:bg-brand-navy text-white px-6 py-3 rounded-full font-bold transition shadow-lg w-fit inline-block text-center">
                     Read Article
-                  </button>
+                  </Link>
                 </div>
               </div>
 
@@ -261,7 +211,7 @@ function Blog() {
                   <h3 className="text-lg font-bold text-brand-navy mb-4">Related Articles</h3>
                   <div className="grid md:grid-cols-2 gap-6">
                     {relatedPosts.map((post) => (
-                      <div key={post.id} className="bg-gray-50 p-5 rounded-xl border border-gray-100 hover:shadow-md transition flex items-start space-x-4 cursor-pointer group">
+                      <Link key={post.id} to={`/blog/${post.id}`} className="bg-gray-50 p-5 rounded-xl border border-gray-100 hover:shadow-md transition flex items-start space-x-4 group">
                         <div className={`w-16 h-16 bg-gradient-to-br ${post.color} rounded-lg flex items-center justify-center flex-shrink-0`}>
                           <svg className="w-8 h-8 text-white opacity-40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" /></svg>
                         </div>
@@ -269,7 +219,7 @@ function Blog() {
                           <h4 className="font-bold text-brand-navy text-sm group-hover:text-brand-royal transition">{post.title}</h4>
                           <p className="text-xs text-gray-500 mt-1">{post.date} • {post.readTime}</p>
                         </div>
-                      </div>
+                      </Link>
                     ))}
                   </div>
                 </div>
@@ -322,16 +272,16 @@ function Blog() {
             ) : filteredPosts.length > 0 ? (
               <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
                 {filteredPosts.map((post) => (
-                  <div key={post.id} className="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl transition transform hover:-translate-y-1 flex flex-col group">
+                  <Link key={post.id} to={`/blog/${post.id}`} className="bg-white rounded-2xl shadow-md overflow-hidden hover:shadow-xl transition transform hover:-translate-y-1 flex flex-col group">
                     <div className={`h-48 bg-gradient-to-br ${post.color} flex items-center justify-center relative`}>
                       <svg className="w-16 h-16 text-white opacity-30" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9a2 2 0 00-2-2h-2m-4-3H9M7 16h6M7 8h6v4H7V8z" /></svg>
                       
                       {/* Social Sharing on Hover */}
                       <div className="absolute top-3 right-3 flex space-x-1.5 opacity-0 group-hover:opacity-100 transition">
-                        <button onClick={(e) => { e.stopPropagation(); shareOnLinkedIn(post.title); }} className="w-7 h-7 bg-white/90 hover:bg-white rounded-full flex items-center justify-center text-gray-600 hover:text-blue-700 transition shadow-sm" title="LinkedIn">
+                        <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); shareOnLinkedIn(post.title); }} className="w-7 h-7 bg-white/90 hover:bg-white rounded-full flex items-center justify-center text-gray-600 hover:text-blue-700 transition shadow-sm" title="LinkedIn">
                           <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
                         </button>
-                        <button onClick={(e) => { e.stopPropagation(); shareOnTwitter(post.title); }} className="w-7 h-7 bg-white/90 hover:bg-white rounded-full flex items-center justify-center text-gray-600 hover:text-blue-400 transition shadow-sm" title="Twitter">
+                        <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); shareOnTwitter(post.title); }} className="w-7 h-7 bg-white/90 hover:bg-white rounded-full flex items-center justify-center text-gray-600 hover:text-blue-400 transition shadow-sm" title="Twitter">
                           <svg className="w-3.5 h-3.5" fill="currentColor" viewBox="0 0 24 24"><path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/></svg>
                         </button>
                       </div>
@@ -363,10 +313,10 @@ function Blog() {
                             </>
                           )}
                         </div>
-                        <button className="text-brand-royal font-semibold hover:underline text-sm">Read →</button>
+                        <span className="text-brand-royal font-semibold group-hover:underline text-sm">Read →</span>
                       </div>
                     </div>
-                  </div>
+                  </Link>
                 ))}
               </div>
             ) : (

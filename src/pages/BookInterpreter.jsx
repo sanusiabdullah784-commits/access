@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabaseClient'; // <-- ADDED: Required for real-time slot blocking
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
 import Calendar from '../components/Calendar';
@@ -9,7 +10,7 @@ function BookInterpreter() {
   const [selectedTime, setSelectedTime] = useState(null);
   const [duration, setDuration] = useState(60);
   const [isEmergency, setIsEmergency] = useState(false);
-  const [selectedLanguage, setSelectedLanguage] = useState('Mandarin Chinese'); // Default to Mandarin for demo
+  const [selectedLanguage, setSelectedLanguage] = useState('Mandarin Chinese');
   
   const [isSessionActive, setIsSessionActive] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
@@ -20,6 +21,9 @@ function BookInterpreter() {
   // State for Pre-Call Smart Briefing
   const [briefingContext, setBriefingContext] = useState('');
 
+  // NEW: State for dynamic booked slots from Supabase
+  const [dynamicBookedSlots, setDynamicBookedSlots] = useState([]);
+
   // Mock data for matched interpreters based on language
   const interpreterProfiles = {
     'English': { name: 'Sarah Jenkins', rating: 4.9, sessions: 342, specialty: 'Business & Legal' },
@@ -28,13 +32,12 @@ function BookInterpreter() {
     'Pidgin English': { name: 'Emeka Nwosu', rating: 4.8, sessions: 215, specialty: 'General & Community' }
   };
 
-  // --- NEW: DYNAMIC PER-MINUTE PRICING LOGIC ---
-  // Rates are hidden from public pages and only calculated here for the quote.
+  // --- DYNAMIC PER-MINUTE PRICING LOGIC ---
   const rateMap = {
     'Mandarin Chinese': 0.50,
     'Igbo': 0.40,
-    'English': 0.50, // Default rate
-    'Pidgin English': 0.40 // Default rate
+    'English': 0.50,
+    'Pidgin English': 0.40
   };
   const currentRate = rateMap[selectedLanguage] || 0.50;
   
@@ -42,12 +45,46 @@ function BookInterpreter() {
   const subtotal = duration * currentRate;
   const totalCost = subtotal + emergencyFee;
 
-  const bookedSlots = ['09:00', '10:00', '14:00', '15:30'];
   const allSlots = [];
   for (let i = 9; i <= 17; i++) {
     allSlots.push(`${i.toString().padStart(2, '0')}:00`);
     if (i !== 17) allSlots.push(`${i.toString().padStart(2, '0')}:30`);
   }
+
+  // NEW: Fetch booked slots from Supabase when a date is selected
+  useEffect(() => {
+    const fetchBookedSlots = async () => {
+      if (!selectedDate) {
+        setDynamicBookedSlots([]);
+        return;
+      }
+      
+      // Create start and end of the selected day in ISO format
+      const startOfDay = new Date(`${selectedDate}T00:00:00`).toISOString();
+      const endOfDay = new Date(`${selectedDate}T23:59:59`).toISOString();
+
+      // Query Supabase for any bookings on this day that are scheduled, pending, or completed
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('scheduled_time')
+        .gte('scheduled_time', startOfDay)
+        .lte('scheduled_time', endOfDay)
+        .in('status', ['scheduled', 'pending', 'completed']); 
+
+      if (data && !error) {
+        // Extract just the "HH:MM" part of the scheduled_time to match our slot format
+        const booked = data.map(booking => {
+          const date = new Date(booking.scheduled_time);
+          return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+        });
+        setDynamicBookedSlots(booked);
+      } else {
+        setDynamicBookedSlots([]);
+      }
+    };
+
+    fetchBookedSlots();
+  }, [selectedDate]);
 
   useEffect(() => {
     if (!isSessionActive || timeLeft <= 0) return;
@@ -118,7 +155,7 @@ END:VCALENDAR`;
   // --- LIVE SESSION SCREEN ---
   if (isSessionActive) {
     return (
-      <div className="min-h-screen bg-gray-900 flex flex-col">
+      <div className="min-h-screen bg-gray-900 flex flex-col pt-36">
         <Navbar />
         <main className="flex-grow flex items-center justify-center p-4">
           <div className="bg-white rounded-3xl shadow-2xl p-10 max-w-2xl w-full text-center">
@@ -159,7 +196,7 @@ END:VCALENDAR`;
 
   // --- BOOKING FORM SCREEN ---
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col pt-36">
       <Navbar />
       
       <PaymentModal 
@@ -188,7 +225,6 @@ END:VCALENDAR`;
             <h2 className="text-2xl font-bold text-brand-navy mb-2">Booking Confirmed!</h2>
             <p className="text-gray-500 mb-6">Your interpreter is scheduled and ready.</p>
 
-            {/* NEW: Professional Quote Breakdown in Receipt */}
             <div className="bg-gray-50 border border-gray-200 rounded-2xl p-5 text-left mb-6">
               <h4 className="font-bold text-brand-navy text-sm uppercase tracking-wider mb-3 border-b border-gray-200 pb-2">Quote Breakdown</h4>
               <div className="space-y-2 text-sm">
@@ -329,12 +365,13 @@ END:VCALENDAR`;
                     {selectedDate && (
                       <div>
                         <label className="block text-gray-700 font-medium mb-4">
-                          Available Times for {selectedDate}th 
+                          Available Times for {selectedDate} 
                           <span className="text-sm text-gray-500 ml-2">(Booked slots are automatically blocked)</span>
                         </label>
                         <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
                           {allSlots.map((time) => {
-                            const isBooked = bookedSlots.includes(time);
+                            // CHECK AGAINST REAL SUPABASE DATA NOW
+                            const isBooked = dynamicBookedSlots.includes(time);
                             const isSelected = selectedTime === time;
                             
                             return (
@@ -468,7 +505,7 @@ END:VCALENDAR`;
                       ></textarea>
                     </div>
 
-                    {/* NEW: PROFESSIONAL QUOTE BREAKDOWN */}
+                    {/* PROFESSIONAL QUOTE BREAKDOWN */}
                     <div className="bg-gray-50 border border-gray-200 rounded-2xl p-6">
                       <h4 className="font-bold text-brand-navy text-sm uppercase tracking-wider mb-4 border-b border-gray-200 pb-2">Your Quote</h4>
                       <div className="space-y-3 text-sm">

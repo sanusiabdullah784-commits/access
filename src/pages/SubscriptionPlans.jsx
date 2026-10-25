@@ -9,10 +9,10 @@ function SubscriptionPlans() {
   const [selectedPlan, setSelectedPlan] = useState('');
   const [selectedAmount, setSelectedAmount] = useState('0');
   
-  // NEW: Billing Toggle State
+  // Billing Toggle State
   const [isAnnual, setIsAnnual] = useState(false);
   
-  // NEW: Usage Calculator State
+  // Usage Calculator State
   const [minutes, setMinutes] = useState(50);
 
   const handleChoosePlan = (planName, planPrice) => {
@@ -75,7 +75,7 @@ function SubscriptionPlans() {
     }
   ];
 
-  // NEW: Comparison Matrix Data
+  // Comparison Matrix Data
   const comparisonFeatures = [
     { feature: "Core Languages (EN, IG, ZH, PID)", starter: true, professional: true, enterprise: true },
     { feature: "Extended Languages Network", starter: false, professional: true, enterprise: true },
@@ -88,7 +88,8 @@ function SubscriptionPlans() {
   ];
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    // FIXED: Added pt-36 to push content down below the fixed Navbar
+    <div className="min-h-screen bg-white flex flex-col pt-36">
       <Navbar />
       
       {/* Payment Modal */}
@@ -114,7 +115,7 @@ function SubscriptionPlans() {
         <section className="py-20 bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             
-            {/* NEW: Monthly/Annual Billing Toggle */}
+            {/* Monthly/Annual Billing Toggle */}
             <div className="flex justify-center items-center space-x-4 mb-12">
               <span className={`text-sm font-bold ${!isAnnual ? 'text-brand-navy' : 'text-gray-500'}`}>Monthly</span>
               <button 
@@ -128,7 +129,7 @@ function SubscriptionPlans() {
               </span>
             </div>
 
-            {/* NEW: Usage Calculator Widget */}
+            {/* Usage Calculator Widget */}
             <div className="max-w-3xl mx-auto bg-white p-8 rounded-2xl shadow-lg border border-gray-100 mb-16">
               <h3 className="text-xl font-bold text-brand-navy mb-6 text-center">Estimate Your Monthly Usage</h3>
               <div className="mb-6">
@@ -204,7 +205,7 @@ function SubscriptionPlans() {
                       ))}
                     </ul>
 
-                    {/* NEW: Fixed Enterprise CTA */}
+                    {/* Fixed Enterprise CTA */}
                     {isEnterprise ? (
                       <Link 
                         to="/contact"
@@ -225,7 +226,7 @@ function SubscriptionPlans() {
                       </button>
                     )}
 
-                    {/* NEW: Risk-Reversal Trust Badges */}
+                    {/* Risk-Reversal Trust Badges */}
                     <div className="mt-6 space-y-2 text-center border-t border-gray-100 pt-4">
                       <p className="text-xs text-gray-500 flex items-center justify-center space-x-1">
                         <svg className="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
@@ -243,7 +244,7 @@ function SubscriptionPlans() {
           </div>
         </section>
 
-        {/* NEW: Detailed Feature Comparison Matrix */}
+        {/* Detailed Feature Comparison Matrix */}
         <section className="py-20 bg-white">
           <div className="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 className="text-3xl font-bold text-center text-brand-navy mb-4">Detailed Feature Comparison</h2>

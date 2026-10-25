@@ -2,10 +2,11 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <!-- MOBILE RESPONSIVENESS -->
+    
+    <!-- MOBILE RESPONSIVENESS (Accessible scaling) -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0" />
     
-    <!-- DEFAULT SEO META TAGS (Updated to focus on Interpretation) -->
+    <!-- DEFAULT SEO META TAGS -->
     <title>Access Lingua | Professional Interpretation & Language Services</title>
     <meta name="description" content="Access Lingua provides certified, 24/7 professional interpretation services via video, phone, and in-person. Trusted by enterprises worldwide for spoken language solutions." />
     <meta name="keywords" content="interpretation services, video interpreter, OPI, over-the-phone interpretation, corporate interpretation, language services, Access Lingua" />
@@ -21,13 +22,21 @@
 
     <!-- PWA & iOS Meta Tags -->
     <link rel="manifest" href="/manifest.webmanifest" />
-    <meta name="theme-color" content="#1e3a8a" />
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="Access Lingua" />
-    <link rel="apple-touch-icon" href="/pwa-192x192.png" />
     
+    <!-- Updated to match brand-royal (#1A56DB) from vite.config.js -->
+    <meta name="theme-color" content="#1A56DB" />
+    
+    <!-- 'black-translucent' makes the iOS status bar blend seamlessly with your app's dark/navy headers -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Access Lingua" />
+    
+    <!-- Icons -->
+    <link rel="apple-touch-icon" href="/pwa-192x192.png" />
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    
+    <!-- Safari Pinned Tab Support -->
+    <link rel="mask-icon" href="/favicon.svg" color="#1A56DB" />
   </head>
   <body>
     <div id="root"></div>

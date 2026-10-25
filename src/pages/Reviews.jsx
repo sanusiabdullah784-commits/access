@@ -22,7 +22,7 @@ function Reviews() {
         // Fallback to mock data if table doesn't exist yet
         setReviews([
           {
-            id: 1,
+            id: '1',
             name: "Sarah Jenkins",
             role: "CEO, Global Tech Inc.",
             industry: "Corporate",
@@ -31,7 +31,7 @@ function Reviews() {
             created_at: new Date().toISOString()
           },
           {
-            id: 2,
+            id: '2',
             name: "Dr. Michael Chen",
             role: "Medical Director",
             industry: "Healthcare",
@@ -40,38 +40,11 @@ function Reviews() {
             created_at: new Date().toISOString()
           },
           {
-            id: 3,
+            id: '3',
             name: "Elena Rodriguez",
             role: "Legal Counsel",
             industry: "Legal",
             text: "I've used many interpretation services, but Access Lingua is on another level. Their certified legal interpreters are always perfect and delivered on time.",
-            rating: 5,
-            created_at: new Date().toISOString()
-          },
-          {
-            id: 4,
-            name: "David O'Connor",
-            role: "Event Coordinator",
-            industry: "Events",
-            text: "We hired them for a massive international conference. The team was flawless, managing multiple languages simultaneously without a hitch!",
-            rating: 4,
-            created_at: new Date().toISOString()
-          },
-          {
-            id: 5,
-            name: "Aisha Patel",
-            role: "Founder, StartUp Hub",
-            industry: "Corporate",
-            text: "The subscription plans are very flexible. As a growing startup, the Professional plan gives us exactly what we need without breaking the bank.",
-            rating: 5,
-            created_at: new Date().toISOString()
-          },
-          {
-            id: 6,
-            name: "James Wilson",
-            role: "Freelance Journalist",
-            industry: "General",
-            text: "I use their phone interpretation daily when interviewing sources abroad. The audio quality is crystal clear and the connection is instant.",
             rating: 5,
             created_at: new Date().toISOString()
           }
@@ -122,7 +95,8 @@ function Reviews() {
   ];
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    // FIXED: Added pt-36 to push content down below the fixed Navbar
+    <div className="min-h-screen bg-white flex flex-col pt-36">
       <Navbar />
       
       <main className="flex-grow">
@@ -151,7 +125,7 @@ function Reviews() {
           </div>
         </section>
 
-        {/* NEW: Trusted By Client Logos Bar */}
+        {/* Trusted By Client Logos Bar */}
         <section className="py-12 bg-gray-50 border-b border-gray-200">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <p className="text-center text-sm font-bold text-gray-500 uppercase tracking-wider mb-8">Trusted by Leading Organizations</p>
@@ -166,7 +140,7 @@ function Reviews() {
           </div>
         </section>
 
-        {/* NEW: Video Testimonials Section */}
+        {/* Video Testimonials Section */}
         <section className="py-20 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <h2 className="text-3xl md:text-4xl font-bold text-center text-brand-navy mb-4">Hear From Our Clients</h2>
@@ -205,7 +179,7 @@ function Reviews() {
         <section className="py-20 bg-gray-50">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             
-            {/* NEW: Industry Filter Pills */}
+            {/* Industry Filter Pills */}
             <div className="flex flex-wrap justify-center gap-3 mb-12">
               {['All', 'Healthcare', 'Legal', 'Corporate', 'Events', 'General'].map((industry) => (
                 <button
@@ -268,7 +242,7 @@ function Reviews() {
               </div>
             )}
 
-            {/* NEW: Leave a Review CTA */}
+            {/* Leave a Review CTA */}
             <div className="mt-16 text-center bg-gradient-to-br from-brand-navy to-brand-royal p-10 rounded-3xl shadow-lg text-white">
               <h3 className="text-2xl font-bold mb-4">Share Your Experience</h3>
               <p className="text-blue-100 mb-6 max-w-lg mx-auto">

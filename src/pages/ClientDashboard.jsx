@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { supabase } from '../lib/supabaseClient';
 import Navbar from '../components/Navbar';
 import Footer from '../components/Footer';
@@ -64,12 +65,12 @@ function ClientDashboard() {
         });
       }
 
-      // 3. Fetch Booking History
+      // 3. Fetch Booking History (Includes new meeting_platform and meeting_link columns)
       const { data: bookingsData } = await supabase
         .from('bookings')
         .select('*')
         .eq('client_id', user.id)
-        .order('created_at', { ascending: false });
+        .order('scheduled_time', { ascending: true }); // Ordered by scheduled time for upcoming sessions
       setBookingHistory(bookingsData || []);
 
       // 4. Fetch Call History (Includes rating and feedback columns)
@@ -155,6 +156,7 @@ function ClientDashboard() {
     const date = new Date(transaction.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
     const amount = (transaction.amount || 0).toFixed(2);
     const type = transaction.type === 'credit' ? 'Credit / Top-up' : 'Debit / Service Charge';
+    const reference = transaction.reference || 'N/A';
     
     const htmlContent = `
       <!DOCTYPE html>
@@ -195,6 +197,7 @@ function ClientDashboard() {
           <p><strong>Bill To:</strong> ${profile.name || 'Client'}</p>
           <p><strong>Email:</strong> ${profile.email || 'N/A'}</p>
           <p><strong>Member ID:</strong> ${profile.memberId || 'N/A'}</p>
+          <p><strong>Transaction Ref:</strong> ${reference}</p>
         </div>
         <table>
           <thead>
@@ -259,7 +262,6 @@ function ClientDashboard() {
   // Show Loading State
   if (loading) {
     return (
-      // FIXED: Added pt-36 to push content down below the fixed Navbar
       <div className="min-h-screen bg-gray-50 flex flex-col pt-36">
         <Navbar />
         <main className="flex-grow flex items-center justify-center">
@@ -274,7 +276,6 @@ function ClientDashboard() {
   }
 
   return (
-    // FIXED: Added pt-36 to push content down below the fixed Navbar
     <div className="min-h-screen bg-gray-50 flex flex-col pt-36">
       <Navbar />
       
@@ -333,32 +334,85 @@ function ClientDashboard() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <h1 className="text-3xl font-bold text-brand-navy mb-4">My Account</h1>
           
-          {/* Next Upcoming Session Quick-Action Widget */}
-          {nextSession && (
-            <div className="bg-gradient-to-r from-brand-royal to-brand-cyan rounded-2xl p-6 text-white mb-8 shadow-lg flex flex-col md:flex-row items-center justify-between gap-6">
+          {/* Quick Actions Widget for Phase 7 Compliance */}
+          <div className="grid md:grid-cols-2 gap-6 mb-8">
+            <Link to="/call-interpreter" className="group bg-gradient-to-br from-green-500 to-green-600 rounded-2xl p-6 text-white shadow-lg flex items-center justify-between hover:shadow-xl transition transform hover:-translate-y-1">
               <div className="flex items-center space-x-4">
-                <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-white/30 transition">
+                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+                  </svg>
+                </div>
+                <div>
+                  <p className="text-green-100 text-xs font-bold uppercase tracking-wider mb-1">Instant Access</p>
+                  <h3 className="text-xl font-bold">Call an Interpreter</h3>
+                  <p className="text-green-100 text-sm mt-1">Connect with a certified professional in under 60 seconds.</p>
+                </div>
+              </div>
+              <svg className="w-8 h-8 text-white/70 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+            </Link>
+
+            <Link to="/book" className="group bg-gradient-to-br from-brand-royal to-brand-cyan rounded-2xl p-6 text-white shadow-lg flex items-center justify-between hover:shadow-xl transition transform hover:-translate-y-1">
+              <div className="flex items-center space-x-4">
+                <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0 group-hover:bg-white/30 transition">
                   <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                   </svg>
                 </div>
                 <div>
+                  <p className="text-blue-100 text-xs font-bold uppercase tracking-wider mb-1">Schedule Ahead</p>
+                  <h3 className="text-xl font-bold">Book an Appointment</h3>
+                  <p className="text-blue-100 text-sm mt-1">Reserve a specific time and interpreter for your next session.</p>
+                </div>
+              </div>
+              <svg className="w-8 h-8 text-white/70 group-hover:translate-x-1 transition-transform" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" /></svg>
+            </Link>
+          </div>
+          
+          {/* UPDATED: Next Upcoming Session Quick-Action Widget with Meeting Link */}
+          {nextSession && (
+            <div className="bg-gradient-to-r from-brand-royal to-brand-cyan rounded-2xl p-6 text-white mb-8 shadow-lg flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
+              <div className="flex items-start space-x-4">
+                <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center flex-shrink-0">
+                  <svg className="w-7 h-7 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                  </svg>
+                </div>
+                <div>
                   <p className="text-blue-100 text-xs font-bold uppercase tracking-wider mb-1">Next Upcoming Session</p>
                   <h3 className="text-xl font-bold">{nextSession.language} Interpretation</h3>
-                  <p className="text-blue-100 text-sm mt-1 flex items-center space-x-2">
-                    <span>{formatDate(nextSession.created_at)}</span>
+                  <p className="text-blue-100 text-sm mt-1 flex flex-wrap items-center gap-x-2 gap-y-1">
+                    <span>{formatDate(nextSession.scheduled_time || nextSession.created_at)}</span>
                     <span>•</span>
-                    <span>{nextSession.booking_time || '10:00 AM'}</span>
-                    <span>•</span>
-                    <span>{nextSession.booking_type}</span>
+                    <span>{new Date(nextSession.scheduled_time || nextSession.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>
+                    <span className="bg-white/20 px-2 py-0.5 rounded text-xs font-bold">
+                      {nextSession.meeting_platform === 'zoom' ? 'Zoom' : 
+                       nextSession.meeting_platform === 'teams' ? 'Microsoft Teams' : 'Secure Room'}
+                    </span>
                   </p>
+                  {nextSession.meeting_link && (
+                    <a 
+                      href={nextSession.meeting_link} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="inline-flex items-center mt-2 text-xs text-blue-200 hover:text-white underline underline-offset-2 transition break-all"
+                    >
+                      <svg className="w-3 h-3 mr-1 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                      {nextSession.meeting_link}
+                    </a>
+                  )}
                 </div>
               </div>
               <div className="flex space-x-3 w-full md:w-auto">
-                <button className="flex-1 md:flex-none bg-white text-brand-royal px-6 py-3 rounded-xl font-bold hover:bg-blue-50 transition shadow-md flex items-center justify-center space-x-2">
+                <a 
+                  href={nextSession.meeting_link || '#'} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex-1 md:flex-none bg-white text-brand-royal px-6 py-3 rounded-xl font-bold hover:bg-blue-50 transition shadow-md flex items-center justify-center space-x-2"
+                >
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
                   <span>Join Call</span>
-                </button>
+                </a>
                 <button className="flex-1 md:flex-none bg-white/20 backdrop-blur-sm border border-white/30 text-white px-6 py-3 rounded-xl font-bold hover:bg-white/30 transition">
                   View Details
                 </button>
@@ -461,7 +515,7 @@ function ClientDashboard() {
                   </div>
                 )}
 
-                {/* BOOKINGS TAB */}
+                {/* UPDATED: BOOKINGS TAB with Meeting Link Column */}
                 {activeTab === 'bookings' && (
                   <div>
                     <h2 className="text-2xl font-bold text-brand-navy mb-6">Booking History</h2>
@@ -469,22 +523,48 @@ function ClientDashboard() {
                       <table className="w-full text-left">
                         <thead className="bg-gray-50 text-gray-500 text-xs uppercase">
                           <tr>
-                            <th className="p-4">Date</th>
+                            <th className="p-4">Date & Time</th>
                             <th className="p-4">Language</th>
                             <th className="p-4">Type</th>
+                            <th className="p-4">Meeting</th>
                             <th className="p-4">Status</th>
+                            <th className="p-4">Action</th>
                           </tr>
                         </thead>
                         <tbody className="divide-y divide-gray-100">
-                          {bookingHistory.length > 0 ? bookingHistory.map((b) => (
-                            <tr key={b.id} className="hover:bg-gray-50">
-                              <td className="p-4 text-gray-800">{formatDate(b.created_at)}</td>
-                              <td className="p-4 text-gray-800">{b.language}</td>
-                              <td className="p-4 text-gray-800">{b.booking_type}</td>
-                              <td className="p-4"><span className={`px-3 py-1 rounded-full text-xs font-bold ${b.status === 'scheduled' || b.status === 'pending' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>{b.status}</span></td>
-                            </tr>
-                          )) : (
-                            <tr><td colSpan="4" className="p-8 text-center text-gray-500">No bookings found.</td></tr>
+                          {bookingHistory.length > 0 ? bookingHistory.map((b) => {
+                            const meetingLabel = b.meeting_platform === 'zoom' ? 'Zoom' : 
+                                                 b.meeting_platform === 'teams' ? 'Teams' : 'Secure Room';
+                            return (
+                              <tr key={b.id} className="hover:bg-gray-50">
+                                <td className="p-4 text-gray-800">
+                                  {formatDate(b.scheduled_time || b.created_at)} <br/>
+                                  <span className="text-xs text-gray-500">{new Date(b.scheduled_time || b.created_at).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' })}</span>
+                                </td>
+                                <td className="p-4 text-gray-800">{b.language}</td>
+                                <td className="p-4 text-gray-800">{b.booking_type}</td>
+                                <td className="p-4">
+                                  {b.meeting_link ? (
+                                    <a href={b.meeting_link} target="_blank" rel="noopener noreferrer" className="text-brand-royal hover:text-brand-navy text-sm font-bold flex items-center space-x-1">
+                                      <span>{meetingLabel}</span>
+                                      <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14" /></svg>
+                                    </a>
+                                  ) : (
+                                    <span className="text-gray-500 text-sm">N/A</span>
+                                  )}
+                                </td>
+                                <td className="p-4"><span className={`px-3 py-1 rounded-full text-xs font-bold ${b.status === 'scheduled' || b.status === 'pending' ? 'bg-blue-100 text-blue-700' : 'bg-green-100 text-green-700'}`}>{b.status}</span></td>
+                                <td className="p-4">
+                                  {(b.status === 'scheduled' || b.status === 'pending') && b.meeting_link && (
+                                    <a href={b.meeting_link} target="_blank" rel="noopener noreferrer" className="bg-brand-royal text-white px-3 py-1.5 rounded-lg text-xs font-bold hover:bg-brand-navy transition inline-flex items-center space-x-1">
+                                      <span>Join</span>
+                                    </a>
+                                  )}
+                                </td>
+                              </tr>
+                            );
+                          }) : (
+                            <tr><td colSpan="6" className="p-8 text-center text-gray-500">No bookings found.</td></tr>
                           )}
                         </tbody>
                       </table>
@@ -594,6 +674,7 @@ function ClientDashboard() {
                             <div>
                               <p className="font-bold text-gray-800">{t.description}</p>
                               <p className="text-xs text-gray-500">{formatDate(t.created_at)}</p>
+                              {t.reference && <p className="text-[10px] text-gray-400 font-mono mt-0.5">Ref: {t.reference}</p>}
                             </div>
                           </div>
                           <div className="flex items-center space-x-4 w-full sm:w-auto justify-between sm:justify-end">

@@ -16,30 +16,68 @@ function VideoBooking() {
   const [showSuccess, setShowSuccess] = useState(false);
   const [userEmail, setUserEmail] = useState('');
   
-  // NEW: Core 4 Languages & Briefing States
+  // Core 4 Languages & Briefing States
   const [selectedLanguage, setSelectedLanguage] = useState('Mandarin Chinese');
   const [briefingContext, setBriefingContext] = useState('');
   const [secureRoomId, setSecureRoomId] = useState('');
+
+  // NEW: Meeting Platform & Link States
+  const [meetingPlatform, setMeetingPlatform] = useState('secure-room');
+  const [meetingLink, setMeetingLink] = useState('');
+
+  // State for dynamic booked slots from Supabase
+  const [dynamicBookedSlots, setDynamicBookedSlots] = useState([]);
 
   // Pricing Logic: Base rate $2/min. Premium adds 20%.
   const baseRate = 2; 
   const premiumMultiplier = isPremium ? 1.20 : 1.00;
   const totalCost = (duration * baseRate) * premiumMultiplier;
 
-  const bookedSlots = ['10:00', '14:00'];
   const allSlots = [];
   for (let i = 9; i <= 17; i++) {
     allSlots.push(`${i.toString().padStart(2, '0')}:00`);
     if (i !== 17) allSlots.push(`${i.toString().padStart(2, '0')}:30`);
   }
 
-  // NEW: Matched Interpreter Profiles
+  // Matched Interpreter Profiles
   const interpreterProfiles = {
     'English': { name: 'Sarah Jenkins', rating: 4.9, sessions: 342, specialty: 'Business & Legal' },
     'Igbo': { name: 'Chidi Okafor', rating: 5.0, sessions: 128, specialty: 'Medical & Community' },
     'Mandarin Chinese': { name: 'Li Wei', rating: 4.9, sessions: 512, specialty: 'Corporate & Technical' },
     'Pidgin English': { name: 'Emeka Nwosu', rating: 4.8, sessions: 215, specialty: 'General & Community' }
   };
+
+  // Fetch booked slots from Supabase when a date is selected
+  useEffect(() => {
+    const fetchBookedSlots = async () => {
+      if (!selectedDate) {
+        setDynamicBookedSlots([]);
+        return;
+      }
+      
+      const startOfDay = new Date(`${selectedDate}T00:00:00`).toISOString();
+      const endOfDay = new Date(`${selectedDate}T23:59:59`).toISOString();
+
+      const { data, error } = await supabase
+        .from('bookings')
+        .select('scheduled_time')
+        .gte('scheduled_time', startOfDay)
+        .lte('scheduled_time', endOfDay)
+        .in('status', ['scheduled', 'pending', 'completed']); 
+
+      if (data && !error) {
+        const booked = data.map(booking => {
+          const date = new Date(booking.scheduled_time);
+          return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')}`;
+        });
+        setDynamicBookedSlots(booked);
+      } else {
+        setDynamicBookedSlots([]);
+      }
+    };
+
+    fetchBookedSlots();
+  }, [selectedDate]);
 
   useEffect(() => {
     const fetchUser = async () => {
@@ -55,40 +93,85 @@ function VideoBooking() {
 
   const handleConfirm = () => {
     if (selectedDate && selectedTime) {
+      // Validate meeting link if a 3rd party platform is selected
+      if (meetingPlatform !== 'secure-room' && !meetingLink.trim()) {
+        alert(`Please provide a valid ${meetingPlatform === 'zoom' ? 'Zoom' : meetingPlatform === 'teams' ? 'Microsoft Teams' : 'Meeting'} link.`);
+        return;
+      }
       setIsPaymentOpen(true);
     } else {
       alert("Please select a date and time!");
     }
   };
 
-  const handlePaymentSuccess = async () => {
+  const handlePaymentSuccess = async (reference) => {
     setIsPaymentOpen(false);
     
-    // NEW: Supabase Integration - Save Booking to Database
     if (user && selectedDate && selectedTime) {
-      // Construct a valid ISO date string from the selected date and time
-      const scheduledTime = new Date(`${selectedDate}T${selectedTime}:00`).toISOString();
-      const roomId = Math.random().toString(36).substring(2, 10).toUpperCase();
-      setSecureRoomId(roomId);
+      try {
+        // 1. Fetch current wallet balance
+        const { data: profileData, error: profileError } = await supabase
+          .from('profiles')
+          .select('wallet_balance')
+          .eq('id', user.id)
+          .single();
 
-      const { error } = await supabase.from('bookings').insert([{
-        client_id: user.id,
-        language: selectedLanguage,
-        booking_type: 'Video Call',
-        duration_minutes: duration,
-        scheduled_time: scheduledTime,
-        briefing_notes: briefingContext,
-        is_premium: isPremium,
-        status: 'scheduled',
-        estimated_rate: totalCost
-      }]);
+        if (profileError) throw profileError;
 
-      if (error) {
-        console.error("Error saving booking:", error);
-        alert("Payment succeeded, but there was an error saving your booking. Please contact support.");
+        const currentBalance = profileData.wallet_balance || 0;
+        const newBalance = Math.max(0, currentBalance - totalCost);
+
+        // 2. Deduct from wallet
+        const { error: updateError } = await supabase
+          .from('profiles')
+          .update({ wallet_balance: newBalance })
+          .eq('id', user.id);
+
+        if (updateError) throw updateError;
+
+        // 3. Log the debit transaction
+        const { error: txError } = await supabase.from('transactions').insert([{
+          user_id: user.id,
+          type: 'debit',
+          amount: totalCost,
+          description: `Video Interpretation Booking (${selectedLanguage}, ${duration} mins)`,
+          reference: reference?.reference || `VIDEO-${Date.now()}`,
+          created_at: new Date().toISOString()
+        }]);
+
+        if (txError) throw txError;
+
+        // 4. Save booking record to Supabase
+        const scheduledTime = new Date(`${selectedDate}T${selectedTime}:00`).toISOString();
+        const roomId = Math.random().toString(36).substring(2, 10).toUpperCase();
+        setSecureRoomId(roomId);
+
+        // Determine the final meeting link to save
+        const finalMeetingLink = meetingPlatform === 'secure-room' 
+          ? `https://accesslingua.com/room/${roomId}` 
+          : meetingLink;
+
+        const { error: bookingError } = await supabase.from('bookings').insert([{
+          client_id: user.id,
+          language: selectedLanguage,
+          booking_type: 'Video Call',
+          duration_minutes: duration,
+          scheduled_time: scheduledTime,
+          briefing_notes: briefingContext,
+          is_premium: isPremium,
+          status: 'scheduled',
+          estimated_rate: totalCost,
+          meeting_platform: meetingPlatform, // NEW
+          meeting_link: finalMeetingLink     // NEW
+        }]);
+
+        if (bookingError) throw bookingError;
+
+      } catch (err) {
+        console.error("Error processing payment and updating wallet:", err);
+        alert("Payment was successful, but there was an error updating your wallet or booking. Please contact support with your transaction reference.");
       }
     } else {
-      // Fallback for testing without auth
       setSecureRoomId(Math.random().toString(36).substring(2, 10).toUpperCase());
     }
 
@@ -97,7 +180,7 @@ function VideoBooking() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col pt-36">
         <Navbar />
         <main className="flex-grow flex items-center justify-center">
           <div className="w-12 h-12 border-4 border-brand-royal border-t-transparent rounded-full animate-spin"></div>
@@ -109,8 +192,16 @@ function VideoBooking() {
 
   // --- SUCCESS STATE ---
   if (showSuccess) {
+    const displayLink = meetingPlatform === 'secure-room' 
+      ? `https://accesslingua.com/room/${secureRoomId}` 
+      : meetingLink;
+      
+    const platformTitle = meetingPlatform === 'secure-room' 
+      ? 'Your Secure Access Lingua Room' 
+      : `Join via ${meetingPlatform.charAt(0).toUpperCase() + meetingPlatform.slice(1)}`;
+
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col pt-36">
         <Navbar />
         <main className="flex-grow flex items-center justify-center py-12 px-4">
           <div className="bg-white rounded-3xl shadow-xl p-10 max-w-2xl w-full text-center animate-fadeIn">
@@ -118,18 +209,18 @@ function VideoBooking() {
               <svg className="w-10 h-10 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
             </div>
             <h1 className="text-3xl font-black text-brand-navy mb-2">Video Appointment Confirmed!</h1>
-            <p className="text-gray-500 mb-8">Your secure meeting room has been generated.</p>
+            <p className="text-gray-500 mb-8">Your meeting details have been securely saved.</p>
 
-            {/* NEW: Proprietary Secure Room Link */}
+            {/* Dynamic Meeting Link Section */}
             <div className="bg-brand-navy/5 border border-brand-royal/20 rounded-2xl p-6 text-left mb-8">
               <p className="text-xs text-brand-royal font-bold uppercase tracking-wider mb-2 flex items-center">
-                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>
-                Your Secure Access Lingua Room
+                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
+                {platformTitle}
               </p>
               <div className="flex items-center justify-between bg-white p-4 rounded-xl border border-brand-royal/20">
-                <span className="text-brand-navy font-mono font-bold truncate">https://accesslingua.com/room/{secureRoomId}</span>
+                <span className="text-brand-navy font-mono font-bold truncate">{displayLink}</span>
                 <button 
-                  onClick={() => navigator.clipboard.writeText(`https://accesslingua.com/room/${secureRoomId}`)}
+                  onClick={() => navigator.clipboard.writeText(displayLink)}
                   className="ml-4 text-brand-royal hover:text-brand-navy font-bold text-sm whitespace-nowrap flex items-center"
                 >
                   <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" /></svg>
@@ -175,7 +266,7 @@ function VideoBooking() {
 
   // --- BOOKING FORM STATE ---
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    <div className="min-h-screen bg-white flex flex-col pt-36">
       <Navbar />
       
       <PaymentModal 
@@ -183,7 +274,8 @@ function VideoBooking() {
         onClose={() => setIsPaymentOpen(false)} 
         amount={totalCost.toFixed(2)} 
         purpose="Video Interpretation Appointment" 
-        onSuccess={handlePaymentSuccess} 
+        onSuccess={handlePaymentSuccess}
+        userEmail={user?.email}
       />
 
       <main className="flex-grow">
@@ -191,7 +283,7 @@ function VideoBooking() {
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
             <h1 className="text-4xl md:text-5xl font-bold mb-4">Schedule Video Interpretation</h1>
             <p className="text-xl text-blue-100 max-w-2xl mx-auto">
-              Connect face-to-face with certified interpreters via our secure, proprietary HD video platform.
+              Connect face-to-face with certified interpreters via our secure platform or your preferred meeting tool.
             </p>
           </div>
         </section>
@@ -225,7 +317,7 @@ function VideoBooking() {
                       <label className="block text-gray-700 font-medium mb-4">Select Time</label>
                       <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
                         {allSlots.map((time) => {
-                          const isBooked = bookedSlots.includes(time);
+                          const isBooked = dynamicBookedSlots.includes(time);
                           const isSelected = selectedTime === time;
                           return (
                             <button
@@ -250,7 +342,6 @@ function VideoBooking() {
                 <div className="space-y-6">
                   <div>
                     <label className="block text-gray-700 font-medium mb-2">Language Needed</label>
-                    {/* NEW: Core 4 Languages Dropdown */}
                     <select 
                       value={selectedLanguage}
                       onChange={(e) => setSelectedLanguage(e.target.value)}
@@ -263,7 +354,7 @@ function VideoBooking() {
                     </select>
                   </div>
 
-                  {/* NEW: Matched Interpreter Preview Card */}
+                  {/* Matched Interpreter Preview Card */}
                   <div className="bg-gradient-to-br from-brand-navy to-brand-royal rounded-xl p-5 text-white shadow-lg transition-all duration-500">
                     <div className="flex items-center space-x-4">
                       <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center text-xl font-bold border-2 border-white/30 backdrop-blur-sm">
@@ -283,11 +374,6 @@ function VideoBooking() {
                           <span className="text-blue-300">•</span>
                           <span className="text-blue-100">{interpreterProfiles[selectedLanguage].sessions}+ Sessions</span>
                         </div>
-                      </div>
-                      <div className="text-right hidden sm:block">
-                        <span className="inline-block bg-white/20 px-2 py-1 rounded text-xs font-semibold backdrop-blur-sm border border-white/10">
-                          {interpreterProfiles[selectedLanguage].specialty}
-                        </span>
                       </div>
                     </div>
                   </div>
@@ -314,6 +400,40 @@ function VideoBooking() {
                     </div>
                   </div>
 
+                  {/* NEW: Meeting Platform Selection */}
+                  <div>
+                    <label className="block text-gray-700 font-medium mb-2">Meeting Platform</label>
+                    <select 
+                      value={meetingPlatform}
+                      onChange={(e) => setMeetingPlatform(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-royal bg-white"
+                    >
+                      <option value="secure-room">Access Lingua Secure Room (Default)</option>
+                      <option value="zoom">Zoom</option>
+                      <option value="teams">Microsoft Teams</option>
+                      <option value="other">Other (Provide Link)</option>
+                    </select>
+                  </div>
+
+                  {/* NEW: Conditional Meeting Link Input */}
+                  {meetingPlatform !== 'secure-room' && (
+                    <div>
+                      <label className="block text-gray-700 font-medium mb-2">
+                        {meetingPlatform === 'zoom' ? 'Zoom Meeting Link' : 
+                         meetingPlatform === 'teams' ? 'Microsoft Teams Meeting Link' : 'Meeting Link'}
+                      </label>
+                      <input 
+                        type="url"
+                        value={meetingLink}
+                        onChange={(e) => setMeetingLink(e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-royal" 
+                        placeholder="https://..."
+                        required
+                      />
+                      <p className="text-xs text-gray-500 mt-1">The interpreter and client will use this link to join.</p>
+                    </div>
+                  )}
+
                   {/* Premium Toggle */}
                   <div className={`border-2 rounded-xl p-5 transition ${isPremium ? 'border-brand-royal bg-brand-royal/5' : 'border-gray-200 bg-white'}`}>
                     <div className="flex items-center justify-between mb-2">
@@ -329,7 +449,7 @@ function VideoBooking() {
                     <p className="text-sm text-gray-600">Includes secure proprietary video room, HD recording, and automated transcripts. <span className="font-bold text-brand-royal">(+20% Premium)</span></p>
                   </div>
 
-                  {/* NEW: Pre-Call Smart Briefing */}
+                  {/* Pre-Call Smart Briefing */}
                   <div>
                     <label className="block text-gray-700 font-medium mb-2">Pre-Call Smart Briefing (Optional)</label>
                     <textarea

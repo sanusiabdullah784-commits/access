@@ -130,7 +130,8 @@ function ClientPortal() {
   // Loading State
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      // FIXED: Added pt-36 to push content down below the fixed Navbar
+      <div className="min-h-screen bg-gray-50 flex flex-col pt-36">
         <Navbar />
         <main className="flex-grow flex items-center justify-center">
           <div className="text-center">
@@ -144,7 +145,8 @@ function ClientPortal() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    // FIXED: Added pt-36 to push content down below the fixed Navbar
+    <div className="min-h-screen bg-gray-50 flex flex-col pt-36">
       <Navbar />
       
       <main className="flex-grow py-12">

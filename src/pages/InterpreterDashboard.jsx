@@ -26,11 +26,11 @@ function InterpreterDashboard() {
   const [callHistory, setCallHistory] = useState([]);
   const [earningsData, setEarningsData] = useState([]);
 
-  // NEW: Incoming Call Modal States
+  // Incoming Call Modal States
   const [incomingCall, setIncomingCall] = useState(null);
   const [callTimer, setCallTimer] = useState(15);
 
-  // NEW: Smart Briefing Modal State
+  // Smart Briefing Modal State
   const [showBriefingModal, setShowBriefingModal] = useState(false);
   const [selectedBriefing, setSelectedBriefing] = useState('');
 
@@ -66,7 +66,7 @@ function InterpreterDashboard() {
       // 2. Fetch Upcoming Bookings
       const { data: bookingsData } = await supabase
         .from('bookings')
-        .select('id, client_name, type, duration_minutes, scheduled_time, briefing_notes, status')
+        .select('id, client_id, booking_type, duration_minutes, scheduled_time, briefing_notes, status')
         .eq('interpreter_id', user.id)
         .in('status', ['scheduled', 'pending'])
         .order('scheduled_time', { ascending: true });
@@ -75,8 +75,8 @@ function InterpreterDashboard() {
         id: b.id,
         date: new Date(b.scheduled_time).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
         time: new Date(b.scheduled_time).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
-        client: b.client_name,
-        type: b.type,
+        client: 'Scheduled Client',
+        type: b.booking_type || 'Video Call',
         duration: `${b.duration_minutes} mins`,
         briefing: b.briefing_notes
       })) : []);
@@ -84,7 +84,7 @@ function InterpreterDashboard() {
       // 3. Fetch Call History
       const { data: callsData } = await supabase
         .from('calls')
-        .select('id, client_name, duration_minutes, rating, cost, created_at')
+        .select('id, user_id, duration_minutes, rating, cost, created_at')
         .eq('interpreter_id', user.id)
         .eq('status', 'Completed')
         .order('created_at', { ascending: false })
@@ -93,8 +93,8 @@ function InterpreterDashboard() {
       setCallHistory(callsData ? callsData.map(c => ({
         id: c.id,
         date: new Date(c.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' }),
-        client: c.client_name,
-        duration: `${c.duration_minutes} mins`,
+        client: 'Individual Client',
+        duration: `${c.duration_minutes || 0} mins`,
         earnings: `$${(c.cost || 0).toFixed(2)}`,
         rating: c.rating || 5
       })) : []);
@@ -122,6 +122,21 @@ function InterpreterDashboard() {
     fetchData();
   }, []);
 
+  // Instantly update database when availability changes
+  useEffect(() => {
+    const updateAvailability = async () => {
+      if (user) {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ availability_status: availability })
+          .eq('id', user.id);
+        
+        if (error) console.error("Error updating availability status:", error);
+      }
+    };
+    updateAvailability();
+  }, [availability, user]);
+
   // Incoming Call Timer Logic
   useEffect(() => {
     if (!incomingCall || callTimer <= 0) {
@@ -148,8 +163,7 @@ function InterpreterDashboard() {
         phone: profile.phone,
         bio: profile.bio,
         languages: profile.languages,
-        certifications: profile.certifications,
-        availability_status: availability
+        certifications: profile.certifications
       })
       .eq('id', user.id);
 
@@ -160,7 +174,6 @@ function InterpreterDashboard() {
   const handleAcceptCall = () => {
     setIncomingCall(null);
     alert("Call accepted! Connecting you to the session...");
-    // In a real app, this would route to the video/phone call interface
   };
 
   const handleDeclineCall = () => {
@@ -183,7 +196,7 @@ function InterpreterDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col pt-36">
         <Navbar />
         <main className="flex-grow flex items-center justify-center">
           <div className="text-center">
@@ -197,10 +210,10 @@ function InterpreterDashboard() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col pt-36">
       <Navbar />
       
-      {/* NEW: Incoming Call Request Modal */}
+      {/* Incoming Call Request Modal */}
       {incomingCall && (
         <div className="fixed inset-0 bg-black/70 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-fadeIn">
           <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full p-8 text-center relative border-t-4 border-brand-royal">
@@ -233,7 +246,7 @@ function InterpreterDashboard() {
         </div>
       )}
 
-      {/* NEW: Smart Briefing Viewer Modal */}
+      {/* Smart Briefing Viewer Modal */}
       {showBriefingModal && (
         <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 relative">
@@ -254,17 +267,41 @@ function InterpreterDashboard() {
       
       <main className="flex-grow py-12">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between mb-8">
-            <h1 className="text-3xl font-bold text-brand-navy">Interpreter Portal</h1>
-            <div className={`px-4 py-2 rounded-full font-bold text-sm flex items-center ${
-              availability === 'Online' ? 'bg-green-100 text-green-700' : 
-              availability === 'Busy' ? 'bg-yellow-100 text-yellow-700' : 'bg-gray-200 text-gray-600'
+          
+          {/* NEW: Prominent Header with Persistent Availability Toggle */}
+          <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+            <div>
+              <h1 className="text-3xl font-bold text-brand-navy">Interpreter Portal</h1>
+              <p className="text-sm text-gray-500 mt-1">Interpreter ID: <span className="font-mono font-bold text-brand-royal">{profile.interpreterId}</span></p>
+            </div>
+            
+            {/* PROMINENT AVAILABILITY TOGGLE */}
+            <div className={`px-5 py-3 rounded-xl font-bold text-sm flex items-center shadow-sm transition-all duration-300 border-2 ${
+              availability === 'Online' ? 'bg-green-50 border-green-200 text-green-700' : 
+              availability === 'Busy' ? 'bg-yellow-50 border-yellow-200 text-yellow-700' : 'bg-gray-50 border-gray-200 text-gray-600'
             }`}>
-              <span className={`w-2 h-2 rounded-full mr-2 ${
-                availability === 'Online' ? 'bg-green-500' : 
-                availability === 'Busy' ? 'bg-yellow-500' : 'bg-gray-500'
+              <span className={`w-3 h-3 rounded-full mr-3 ${
+                availability === 'Online' ? 'bg-green-500 animate-pulse' : 
+                availability === 'Busy' ? 'bg-yellow-500' : 'bg-gray-400'
               }`}></span>
-              Currently: {availability}
+              <div className="flex flex-col items-start">
+                <span className="text-[10px] uppercase tracking-wider opacity-70">Current Status</span>
+                <span className="text-base leading-none mt-0.5">
+                  {availability === 'Online' ? 'Available for Calls' : availability === 'Busy' ? 'Busy' : 'Offline'}
+                </span>
+              </div>
+              <div className="ml-4 pl-4 border-l border-current/20">
+                 <select 
+                   value={availability}
+                   onChange={(e) => setAvailability(e.target.value)}
+                   className="bg-transparent font-bold text-sm focus:outline-none cursor-pointer appearance-none text-right pr-5"
+                   style={{ backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`, backgroundPosition: 'right', backgroundRepeat: 'no-repeat', backgroundSize: '1.5em 1.5em' }}
+                 >
+                   <option value="Online">Go Online</option>
+                   <option value="Busy">Set to Busy</option>
+                   <option value="Offline">Go Offline</option>
+                 </select>
+              </div>
             </div>
           </div>
           
@@ -332,7 +369,7 @@ function InterpreterDashboard() {
                       </div>
                     </div>
 
-                    {/* NEW: Certifications & Badges */}
+                    {/* Certifications & Badges */}
                     <div className="mb-6">
                       <label className="block text-sm font-bold text-gray-700 mb-2">Certifications & Badges</label>
                       <div className="flex flex-wrap gap-2 mb-3">
@@ -340,7 +377,7 @@ function InterpreterDashboard() {
                           <span key={idx} className="bg-purple-100 text-purple-800 px-3 py-1.5 rounded-full text-sm font-bold flex items-center border border-purple-200">
                             <svg className="w-4 h-4 mr-1.5 text-purple-600" fill="currentColor" viewBox="0 0 20 20"><path fillRule="evenodd" d="M6.267 3.455a3.066 3.066 0 001.745-.723 3.066 3.066 0 013.976 0 3.066 3.066 0 001.745.723 3.066 3.066 0 012.812 2.812c.051.643.304 1.254.723 1.745a3.066 3.066 0 010 3.976 3.066 3.066 0 00-.723 1.745 3.066 3.066 0 01-2.812 2.812 3.066 3.066 0 00-1.745.723 3.066 3.066 0 01-3.976 0 3.066 3.066 0 00-1.745-.723 3.066 3.066 0 01-2.812-2.812 3.066 3.066 0 00-.723-1.745 3.066 3.066 0 010-3.976 3.066 3.066 0 00.723-1.745 3.066 3.066 0 012.812-2.812zm7.44 5.252a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" /></svg>
                             {cert}
-                            <button onClick={() => setProfile({...profile, certifications: profile.certifications.filter((_, i) => i !== idx)})} className="ml-2 text-purple-600 hover:text-red-500">×</button>
+                            <button onClick={() => setProfile({...profile, certifications: profile.certifications.filter((_, i) => i !== idx)})} className="ml-2 text-purple-600 hover:text-red-500 font-bold">×</button>
                           </span>
                         ))}
                       </div>
@@ -361,7 +398,7 @@ function InterpreterDashboard() {
                         {profile.languages.map((lang, idx) => (
                           <span key={idx} className="bg-brand-cyan/10 text-brand-navy px-3 py-1.5 rounded-full text-sm font-bold flex items-center">
                             {lang}
-                            <button onClick={() => setProfile({...profile, languages: profile.languages.filter((_, i) => i !== idx)})} className="ml-2 text-brand-cyan hover:text-red-500">×</button>
+                            <button onClick={() => setProfile({...profile, languages: profile.languages.filter((_, i) => i !== idx)})} className="ml-2 text-brand-cyan hover:text-red-500 font-bold">×</button>
                           </span>
                         ))}
                       </div>
@@ -389,7 +426,7 @@ function InterpreterDashboard() {
                 {activeTab === 'availability' && (
                   <div>
                     <h2 className="text-2xl font-bold text-brand-navy mb-6">Availability Status</h2>
-                    <p className="text-gray-500 mb-8">Set your current status. You will only receive call requests when you are Online.</p>
+                    <p className="text-gray-500 mb-8">Set your current status. You will only receive instant call requests when you are <strong className="text-green-600">Online</strong>.</p>
                     
                     <div className="grid md:grid-cols-3 gap-6 mb-10">
                       {['Online', 'Busy', 'Offline'].map((status) => (
@@ -414,23 +451,30 @@ function InterpreterDashboard() {
                       ))}
                     </div>
 
-                    {/* NEW: Simulate Incoming Call Button for Testing */}
-                    <button 
-                      onClick={() => {
-                        setIncomingCall({
-                          client: 'City General Hospital',
-                          language: 'Spanish',
-                          type: 'Video Call',
-                          duration: 30,
-                          briefing: 'Patient: John Doe. Topic: Discussing recent cardiology test results. Please be prepared for medical terminology.'
-                        });
-                        setCallTimer(15);
-                      }}
-                      className="w-full bg-brand-cyan/10 text-brand-cyan hover:bg-brand-cyan hover:text-white border border-brand-cyan/20 font-bold py-3 rounded-xl transition flex items-center justify-center space-x-2 mb-10"
-                    >
-                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
-                      <span>Simulate Incoming Call (Test Modal)</span>
-                    </button>
+                    {/* Simulate Incoming Call Button for Testing */}
+                    <div className="bg-blue-50 border border-blue-200 rounded-xl p-6 mb-10">
+                      <h3 className="font-bold text-brand-navy mb-2 flex items-center">
+                        <svg className="w-5 h-5 mr-2 text-brand-royal" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        Developer Testing Zone
+                      </h3>
+                      <p className="text-sm text-gray-600 mb-4">In production, calls will route to you automatically via Supabase Realtime when you are "Online". Use this button to test the incoming call UI.</p>
+                      <button 
+                        onClick={() => {
+                          setIncomingCall({
+                            client: 'City General Hospital',
+                            language: 'Spanish',
+                            type: 'Video Call',
+                            duration: 30,
+                            briefing: 'Patient: John Doe. Topic: Discussing recent cardiology test results. Please be prepared for medical terminology.'
+                          });
+                          setCallTimer(15);
+                        }}
+                        className="w-full md:w-auto bg-brand-cyan text-white hover:bg-brand-royal font-bold py-3 px-6 rounded-xl transition flex items-center justify-center space-x-2"
+                      >
+                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                        <span>Simulate Incoming Call</span>
+                      </button>
+                    </div>
 
                     <div className="bg-gray-50 p-6 rounded-xl">
                       <h3 className="font-bold text-gray-800 mb-4">Weekly Schedule (Operational Info)</h3>
@@ -451,7 +495,7 @@ function InterpreterDashboard() {
                   <div>
                     <h2 className="text-2xl font-bold text-brand-navy mb-6">Bookings & Earnings</h2>
                     
-                    {/* NEW: Visual Earnings Analytics Chart */}
+                    {/* Visual Earnings Analytics Chart */}
                     <div className="bg-white rounded-2xl border border-gray-200 p-6 mb-8">
                       <h3 className="text-lg font-bold text-brand-navy mb-4">Earnings (Last 7 Days)</h3>
                       <div className="flex items-end justify-between space-x-2 h-32 pt-4">

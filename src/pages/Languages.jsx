@@ -96,7 +96,8 @@ function Languages() {
   });
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    // FIXED: Added pt-36 to push content down below the fixed Navbar
+    <div className="min-h-screen bg-white flex flex-col pt-36">
       <Navbar />
       
       <main className="flex-grow">

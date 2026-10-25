@@ -8,6 +8,7 @@ function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [user, setUser] = useState(null);
+  const [userRole, setUserRole] = useState(null); // NEW: State for user role
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   
   const location = useLocation();
@@ -22,16 +23,36 @@ function Navbar() {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
-  // 2. Auth User Check
+  // 2. Auth User Check & Role Fetch
   useEffect(() => {
     const getUser = async () => {
       const { data: { user } } = await supabase.auth.getUser();
-      setUser(user);
+      if (user) {
+        setUser(user);
+        // Fetch role to conditionally show Admin link
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+        setUserRole(profile?.role);
+      }
     };
     getUser();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
-      setUser(session?.user ?? null);
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      const currentUser = session?.user ?? null;
+      setUser(currentUser);
+      if (currentUser) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', currentUser.id)
+          .single();
+        setUserRole(profile?.role);
+      } else {
+        setUserRole(null);
+      }
     });
 
     return () => subscription.unsubscribe();
@@ -129,6 +150,14 @@ function Navbar() {
           <div className="hidden md:flex items-center space-x-4">
             <ThemeToggle />
 
+            {/* NEW: Admin Portal Link (Desktop) */}
+            {userRole === 'admin' && (
+              <Link to="/admin-dashboard" className="text-brand-navy dark:text-white hover:text-brand-royal dark:hover:text-brand-cyan font-bold transition border-2 border-brand-navy dark:border-white px-5 py-2.5 rounded-full hover:bg-brand-navy/5 dark:hover:bg-white/10 flex items-center space-x-2">
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                <span>Admin Portal</span>
+              </Link>
+            )}
+
             {user ? (
               <div className="relative">
                 <button 
@@ -154,9 +183,10 @@ function Navbar() {
               </div>
             ) : (
               <>
+                {/* PHASE 7 COMPLIANCE: Clearly identified "Call an Interpreter" function */}
                 <Link to="/call-interpreter" className="flex items-center space-x-2 text-brand-navy dark:text-white hover:text-brand-royal dark:hover:text-brand-cyan font-bold transition border-2 border-brand-navy dark:border-white px-5 py-2.5 rounded-full hover:bg-brand-navy/5 dark:hover:bg-white/10">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
-                  <span>Phone Instantly</span>
+                  <span>Call an Interpreter</span>
                 </Link>
                 <Link to="/book" className="bg-brand-royal hover:bg-brand-navy text-white px-6 py-3 rounded-full font-bold transition shadow-lg flex items-center space-x-2">
                   <span>Book Appointment</span>
@@ -185,9 +215,10 @@ function Navbar() {
           <div className="md:hidden absolute top-full left-0 w-full bg-white dark:bg-gray-900 border-t border-gray-100 dark:border-gray-800 shadow-xl max-h-[80vh] overflow-y-auto z-40">
             <div className="p-6 space-y-6">
               <div className="space-y-3 pb-6 border-b border-gray-200 dark:border-gray-700">
+                {/* PHASE 7 COMPLIANCE: Clearly identified "Call an Interpreter" function (Mobile) */}
                 <Link to="/call-interpreter" onClick={() => setIsOpen(false)} className="block w-full text-center border-2 border-brand-navy dark:border-white text-brand-navy dark:text-white font-bold py-3 rounded-full flex items-center justify-center space-x-2">
                   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" /></svg>
-                  <span>Phone Instantly</span>
+                  <span>Call an Interpreter</span>
                 </Link>
                 <Link to="/book" onClick={() => setIsOpen(false)} className="block w-full text-center bg-brand-royal text-white font-bold py-3 rounded-full shadow-md">
                   Book an Appointment
@@ -229,6 +260,13 @@ function Navbar() {
 
               {user && (
                 <div className="pt-4 border-t border-gray-200 dark:border-gray-700">
+                  {/* NEW: Admin Portal Link (Mobile) */}
+                  {userRole === 'admin' && (
+                    <Link to="/admin-dashboard" onClick={() => setIsOpen(false)} className="block w-full text-center text-brand-navy dark:text-white font-bold py-3 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-800 transition mb-2 flex items-center justify-center space-x-2">
+                      <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /></svg>
+                      <span>Admin Portal</span>
+                    </Link>
+                  )}
                   <button onClick={handleLogout} className="w-full text-center text-red-600 font-bold py-3 rounded-lg hover:bg-red-50 dark:hover:bg-red-900/20 transition">
                     Sign Out ({user.email})
                   </button>

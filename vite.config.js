@@ -39,6 +39,17 @@ export default defineConfig({
             purpose: 'any maskable' // Required for Android adaptive icons
           }
         ]
+      },
+      workbox: {
+        // Cache all static assets for instant loading and offline resilience
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2,woff,ttf}'],
+        // Ensure the app works offline by falling back to index.html for navigation requests
+        navigateFallback: 'index.html',
+        // Don't apply the fallback to API requests or external resources
+        navigateFallbackDenylist: [/^\/api/, /^\/supabase/],
+      },
+      devOptions: {
+        enabled: true // Allows testing PWA features in local development mode
       }
     })
   ],
@@ -57,6 +68,7 @@ export default defineConfig({
   
   build: {
     // Optimize build for production (SEO & Performance)
+    // Default chunking is already optimal, removing manualChunks prevents build errors
     sourcemap: false
   }
 })

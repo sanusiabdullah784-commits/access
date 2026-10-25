@@ -87,7 +87,7 @@ function CorporateDashboard() {
         .select('*')
         .eq('company_id', profile.company_id)
         .order('created_at', { ascending: false })
-        .limit(5);
+        .limit(10);
       setBillingSummaries(invoicesData || []);
 
       // 7. Get audit logs
@@ -235,7 +235,7 @@ function CorporateDashboard() {
   // Loading State
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col pt-36">
         <Navbar />
         <main className="flex-grow flex items-center justify-center">
           <div className="text-center">
@@ -251,7 +251,7 @@ function CorporateDashboard() {
   // Fallback if no company found
   if (!company) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="min-h-screen bg-gray-50 flex flex-col pt-36">
         <Navbar />
         <main className="flex-grow flex items-center justify-center p-8">
           <div className="bg-white rounded-2xl shadow-md p-10 text-center max-w-md">
@@ -271,7 +271,7 @@ function CorporateDashboard() {
   const activeEmployees = employees.filter(e => e.status === 'Active').length;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="min-h-screen bg-gray-50 flex flex-col pt-36">
       <Navbar />
       
       <main className="flex-grow py-12">
@@ -282,6 +282,7 @@ function CorporateDashboard() {
             {[
               { id: 'overview', label: 'Overview', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
               { id: 'employees', label: 'Employees', icon: 'M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z' },
+              { id: 'billing', label: 'Billing', icon: 'M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z' },
               { id: 'audit', label: 'Audit Logs', icon: 'M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z' }
             ].map((tab) => (
               <button
@@ -322,7 +323,10 @@ function CorporateDashboard() {
                   <p className="text-blue-200 text-sm uppercase tracking-wider font-bold">Corporate Wallet</p>
                   <h2 className="text-4xl font-black mt-2">${(company.wallet_balance || 0).toFixed(2)}</h2>
                   <p className="text-blue-100 text-sm mt-2">Enterprise billing cycle</p>
-                  <button className="mt-4 bg-white text-brand-navy px-4 py-2 rounded-full text-sm font-bold hover:bg-brand-cyan hover:text-white transition">
+                  <button 
+                    onClick={() => setActiveSection('billing')}
+                    className="mt-4 bg-white text-brand-navy px-4 py-2 rounded-full text-sm font-bold hover:bg-brand-cyan hover:text-white transition"
+                  >
                     Manage Billing
                   </button>
                 </div>
@@ -381,7 +385,7 @@ function CorporateDashboard() {
 
               {/* Monthly Usage & Billing Grid */}
               <div className="grid lg:grid-cols-2 gap-8 mb-10">
-                {/* Monthly Usage Reports (Rebranded) */}
+                {/* Monthly Usage Reports */}
                 <div className="bg-white rounded-2xl shadow-md p-6">
                   <h3 className="text-xl font-bold text-brand-navy mb-6">Monthly Usage Report</h3>
                   <div className="space-y-6">
@@ -416,14 +420,14 @@ function CorporateDashboard() {
                   </div>
                 </div>
 
-                {/* Billing Summaries */}
+                {/* Billing Summaries Preview */}
                 <div className="bg-white rounded-2xl shadow-md p-6">
                   <div className="flex justify-between items-center mb-6">
-                    <h3 className="text-xl font-bold text-brand-navy">Billing Summaries</h3>
-                    <button className="text-sm text-brand-royal font-bold hover:underline">View All</button>
+                    <h3 className="text-xl font-bold text-brand-navy">Recent Billing Summaries</h3>
+                    <button onClick={() => setActiveSection('billing')} className="text-sm text-brand-royal font-bold hover:underline">View All</button>
                   </div>
                   <div className="space-y-4">
-                    {billingSummaries.length > 0 ? billingSummaries.map((invoice) => (
+                    {billingSummaries.length > 0 ? billingSummaries.slice(0, 3).map((invoice) => (
                       <div key={invoice.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition">
                         <div className="flex items-center space-x-4">
                           <div className="w-10 h-10 bg-brand-navy/10 text-brand-navy rounded-lg flex items-center justify-center">
@@ -505,7 +509,6 @@ function CorporateDashboard() {
                   <p className="text-gray-500 text-sm">Manage staff access and view individual Member IDs.</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
-                  {/* CSV Import Button */}
                   <label className="cursor-pointer bg-white border-2 border-brand-cyan text-brand-cyan hover:bg-brand-cyan hover:text-white px-5 py-2.5 rounded-full font-bold transition shadow-md flex items-center">
                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" /></svg>
                     Import CSV
@@ -517,7 +520,6 @@ function CorporateDashboard() {
                       className="hidden" 
                     />
                   </label>
-                  {/* CSV Export Button */}
                   <button 
                     onClick={handleExportCSV}
                     className="bg-white border-2 border-brand-navy text-brand-navy hover:bg-brand-navy hover:text-white px-5 py-2.5 rounded-full font-bold transition shadow-md flex items-center"
@@ -525,8 +527,10 @@ function CorporateDashboard() {
                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
                     Export CSV
                   </button>
-                  {/* Add Employee Button */}
-                  <button className="bg-brand-royal hover:bg-brand-navy text-white px-5 py-2.5 rounded-full font-bold transition shadow-md flex items-center">
+                  <button 
+                    onClick={() => alert('This would open a modal to invite a new employee via email and assign them a Member ID.')}
+                    className="bg-brand-royal hover:bg-brand-navy text-white px-5 py-2.5 rounded-full font-bold transition shadow-md flex items-center"
+                  >
                     <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
                     Add Employee
                   </button>
@@ -578,6 +582,76 @@ function CorporateDashboard() {
                     )}
                   </tbody>
                 </table>
+              </div>
+            </div>
+          )}
+
+          {/* BILLING SECTION */}
+          {activeSection === 'billing' && (
+            <div className="bg-white rounded-2xl shadow-md overflow-hidden">
+              <div className="p-6 border-b border-gray-100 flex justify-between items-center">
+                <div>
+                  <h3 className="text-xl font-bold text-brand-navy flex items-center">
+                    <svg className="w-6 h-6 mr-2 text-brand-royal" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" /></svg>
+                    Billing Summaries & Wallet Management
+                  </h3>
+                  <p className="text-gray-500 text-sm mt-1">Track corporate spending, manage wallet balance, and download invoices.</p>
+                </div>
+                <button className="bg-brand-royal hover:bg-brand-navy text-white px-5 py-2.5 rounded-full font-bold transition shadow-md flex items-center">
+                  <svg className="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+                  Top Up Wallet
+                </button>
+              </div>
+              <div className="p-6">
+                {billingSummaries.length > 0 ? (
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-left">
+                      <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wider">
+                        <tr>
+                          <th className="p-4 font-bold">Invoice Number</th>
+                          <th className="p-4 font-bold">Date</th>
+                          <th className="p-4 font-bold">Description</th>
+                          <th className="p-4 font-bold">Amount</th>
+                          <th className="p-4 font-bold">Status</th>
+                          <th className="p-4 font-bold">Action</th>
+                        </tr>
+                      </thead>
+                      <tbody className="divide-y divide-gray-100">
+                        {billingSummaries.map((invoice) => (
+                          <tr key={invoice.id} className="hover:bg-gray-50 transition">
+                            <td className="p-4 font-mono text-sm text-brand-royal font-bold">
+                              {invoice.invoice_number || `INV-${invoice.id.slice(0, 8).toUpperCase()}`}
+                            </td>
+                            <td className="p-4 text-gray-600">{formatDate(invoice.created_at)}</td>
+                            <td className="p-4 text-gray-600">{invoice.description || 'Monthly Interpretation Services'}</td>
+                            <td className="p-4 font-bold text-gray-800">${(invoice.amount || 0).toFixed(2)}</td>
+                            <td className="p-4">
+                              <span className={`px-3 py-1 rounded-full text-xs font-bold ${
+                                invoice.status === 'Paid' ? 'bg-green-100 text-green-700' : 
+                                invoice.status === 'Pending' ? 'bg-yellow-100 text-yellow-700' : 
+                                'bg-red-100 text-red-700'
+                              }`}>
+                                {invoice.status}
+                              </span>
+                            </td>
+                            <td className="p-4">
+                              <button className="text-brand-royal hover:text-brand-navy font-medium text-sm flex items-center">
+                                <svg className="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                                Download PDF
+                              </button>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <svg className="w-16 h-16 text-gray-300 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" /></svg>
+                    <p className="text-gray-500 font-medium">No billing history found.</p>
+                    <p className="text-sm text-gray-400 mt-1">Invoices will be generated automatically at the end of each billing cycle.</p>
+                  </div>
+                )}
               </div>
             </div>
           )}

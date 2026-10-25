@@ -1,4 +1,6 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import { supabase } from './lib/supabaseClient';
 import ScrollToTop from './components/ScrollToTop';
 import WhatsAppButton from './components/WhatsAppButton';
 import AIChatWidget from './components/AIChatWidget';
@@ -26,9 +28,40 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsConditions from './pages/TermsConditions';
 import Careers from './pages/Careers';
 import Blog from './pages/Blog';
+import BlogPost from './pages/BlogPost';
 import CallInterpreter from './pages/CallInterpreter';
 import Login from './pages/Login';
-import Register from './pages/Register'; // <-- ADDED: Import Register Page
+import Register from './pages/Register';
+
+// --- SECURITY: Admin Route Guard ---
+const AdminRoute = ({ children }) => {
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const checkAdmin = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .single();
+        
+        if (profile && profile.role === 'admin') {
+          setUser(user);
+        }
+      }
+      setLoading(false);
+    };
+    checkAdmin();
+  }, []);
+
+  if (loading) return <div className="min-h-screen flex items-center justify-center bg-gray-50"><div className="w-12 h-12 border-4 border-brand-royal border-t-transparent rounded-full animate-spin"></div></div>;
+  if (!user) return <Navigate to="/login" replace />;
+  
+  return children;
+};
 
 function App() {
   return (
@@ -53,14 +86,22 @@ function App() {
         <Route path="/client-dashboard" element={<ClientDashboard />} />
         <Route path="/interpreter-portal" element={<InterpreterPortal />} />
         <Route path="/interpreter-dashboard" element={<InterpreterDashboard />} />
-        <Route path="/admin-dashboard" element={<AdminDashboard />} />
+        
+        {/* SECURED ADMIN ROUTE */}
+        <Route path="/admin-dashboard" element={
+          <AdminRoute>
+            <AdminDashboard />
+          </AdminRoute>
+        } />
+        
         <Route path="/privacy" element={<PrivacyPolicy />} />
         <Route path="/terms" element={<TermsConditions />} />
         <Route path="/careers" element={<Careers />} />
         <Route path="/blog" element={<Blog />} />
+        <Route path="/blog/:id" element={<BlogPost />} />
         <Route path="/call-interpreter" element={<CallInterpreter />} />
         <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} /> {/* <-- ADDED: Register Route */}
+        <Route path="/register" element={<Register />} />
       </Routes>
       
       {/* GLOBAL FLOATING WIDGETS */}

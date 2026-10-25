@@ -9,7 +9,8 @@ function FAQ() {
   const [activeCategory, setActiveCategory] = useState('All');
   const [helpful, setHelpful] = useState({});
 
-  // NEW: Brand-Aligned & Categorized FAQ Data
+  // Brand-Aligned & Categorized FAQ Data
+  // (Note: Hardcoded is perfect for Phase 1. We can move this to Supabase later if an Admin FAQ manager is requested).
   const faqs = [
     {
       id: 1,
@@ -66,7 +67,8 @@ function FAQ() {
   });
 
   return (
-    <div className="min-h-screen bg-white flex flex-col">
+    // FIXED: Added pt-36 to push content down below the fixed Navbar
+    <div className="min-h-screen bg-white flex flex-col pt-36">
       <Navbar />
       
       <main className="flex-grow">
@@ -78,7 +80,7 @@ function FAQ() {
               Everything you need to know about Access Lingua.
             </p>
             
-            {/* NEW: Live Search Filter */}
+            {/* Live Search Filter */}
             <div className="max-w-xl mx-auto relative">
               <input 
                 type="text" 
@@ -98,7 +100,7 @@ function FAQ() {
         <section className="py-20 bg-gray-50">
           <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8">
             
-            {/* NEW: Categorized Tabs */}
+            {/* Categorized Tabs */}
             <div className="flex flex-wrap justify-center gap-2 mb-8">
               {['All', 'General & Booking', 'Billing & Wallet', 'Security & Compliance'].map((cat) => (
                 <button
@@ -138,7 +140,7 @@ function FAQ() {
                       <div className="px-8 pb-6 text-gray-600 leading-relaxed animate-fadeIn">
                         <p className="mb-4">{faq.answer}</p>
                         
-                        {/* NEW: "Was this helpful?" Feedback Loop */}
+                        {/* "Was this helpful?" Feedback Loop */}
                         <div className="flex items-center space-x-4 pt-4 border-t border-gray-100">
                           <span className="text-sm font-medium text-gray-500">Was this helpful?</span>
                           <button 
@@ -175,7 +177,7 @@ function FAQ() {
               )}
             </div>
 
-            {/* NEW: Quick-Link "Next Steps" Cards */}
+            {/* Quick-Link "Next Steps" Cards */}
             <div className="mt-16 grid md:grid-cols-3 gap-6">
               <Link to="/services" className="bg-white p-6 rounded-2xl shadow-md border border-gray-100 hover:shadow-lg hover:border-brand-royal/30 transition group text-center">
                 <div className="w-12 h-12 bg-brand-royal/10 text-brand-royal rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-brand-royal group-hover:text-white transition">
@@ -185,7 +187,7 @@ function FAQ() {
                 <p className="text-sm text-gray-500">Learn more about our core interpretation solutions.</p>
               </Link>
               
-              <Link to="/subscription-plans" className="bg-white p-6 rounded-2xl shadow-md border border-gray-100 hover:shadow-lg hover:border-brand-royal/30 transition group text-center">
+              <Link to="/plans" className="bg-white p-6 rounded-2xl shadow-md border border-gray-100 hover:shadow-lg hover:border-brand-royal/30 transition group text-center">
                 <div className="w-12 h-12 bg-brand-cyan/10 text-brand-cyan rounded-full flex items-center justify-center mx-auto mb-4 group-hover:bg-brand-cyan group-hover:text-white transition">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                 </div>

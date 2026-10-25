@@ -1,15 +1,16 @@
 import { useState } from 'react';
+import { supabase } from '../lib/supabaseClient';
 
 function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
-  // NEW: Search & Bulk Action States
+  // Search & Bulk Action States
   const [userSearch, setUserSearch] = useState('');
   const [selectedUsers, setSelectedUsers] = useState([]);
   const [selectedReviews, setSelectedReviews] = useState([]);
 
-  // Mock Data
+  // Mock Data (In production, fetch these from Supabase)
   const stats = [
     { label: 'Total Revenue (MTD)', value: '$142,500', color: 'bg-green-500' },
     { label: 'Active Users', value: '1,240', color: 'bg-blue-500' },
@@ -41,7 +42,7 @@ function AdminDashboard() {
     { id: 3, user: 'John Doe', rating: 2, comment: 'Had some audio issues during the call, but support fixed it.', status: 'Pending' },
   ]);
 
-  // NEW: Live Activity Feed Data
+  // Live Activity Feed Data
   const recentActivities = [
     { id: 1, action: 'New User Registered', detail: 'emily@example.com', time: '2 mins ago', color: 'text-blue-500', icon: 'M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z' },
     { id: 2, action: 'Interpreter Went Online', detail: 'Maria Gonzalez', time: '5 mins ago', color: 'text-green-500', icon: 'M5 13l4 4L19 7' },
@@ -49,7 +50,7 @@ function AdminDashboard() {
     { id: 4, action: 'Review Submitted', detail: 'Sarah Smith (4 Stars)', time: '15 mins ago', color: 'text-yellow-500', icon: 'M11.049 2.927c.3-.921 1.603-.921 1.902 0l1.519 4.674a1 1 0 00.95.69h4.915c.969 0 1.371 1.24.588 1.81l-3.976 2.888a1 1 0 00-.363 1.118l1.518 4.674c.3.922-.755 1.688-1.538 1.118l-3.976-2.888a1 1 0 00-1.176 0l-3.976 2.888c-.783.57-1.838-.197-1.538-1.118l1.518-4.674a1 1 0 00-.363-1.118l-3.976-2.888c-.784-.57-.38-1.81.588-1.81h4.914a1 1 0 00.951-.69l1.519-4.674z' },
   ];
 
-  // NEW: Visual Revenue Chart Data
+  // Visual Revenue Chart Data
   const revenueData = [
     { day: 'Mon', amount: 1200 }, { day: 'Tue', amount: 1900 }, { day: 'Wed', amount: 1500 },
     { day: 'Thu', amount: 2200 }, { day: 'Fri', amount: 2800 }, { day: 'Sat', amount: 1800 }, { day: 'Sun', amount: 2100 },
@@ -61,7 +62,7 @@ function AdminDashboard() {
     setSelectedReviews(selectedReviews.filter(revId => revId !== id));
   };
 
-  // NEW: Bulk Action Helpers
+  // Bulk Action Helpers
   const toggleSelectUser = (id) => {
     setSelectedUsers(prev => prev.includes(id) ? prev.filter(uid => uid !== id) : [...prev, id]);
   };
@@ -77,10 +78,13 @@ function AdminDashboard() {
     setSelectedReviews([]);
   };
 
-  // NEW: CSV Export Helper
+  // Safer CSV Export Helper (handles commas in data)
   const exportToCSV = (data, filename) => {
+    if (!data || data.length === 0) return;
     const headers = Object.keys(data[0]).join(',');
-    const rows = data.map(obj => Object.values(obj).join(',')).join('\n');
+    const rows = data.map(obj => 
+      Object.values(obj).map(val => `"${String(val).replace(/"/g, '""')}"`).join(',')
+    ).join('\n');
     const csvContent = `data:text/csv;charset=utf-8,${headers}\n${rows}`;
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement('a');
@@ -89,6 +93,11 @@ function AdminDashboard() {
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
+  };
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    window.location.href = '/login';
   };
 
   const filteredUsers = users.filter(u => u.name.toLowerCase().includes(userSearch.toLowerCase()) || u.email.toLowerCase().includes(userSearch.toLowerCase()));
@@ -108,18 +117,17 @@ function AdminDashboard() {
   ];
 
   return (
-    // NEW: Full Dark Mode Support applied to root
     <div className="min-h-screen bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 flex flex-col transition-colors duration-300">
       <header className="bg-brand-navy dark:bg-gray-800 text-white shadow-lg z-20 relative border-b border-gray-700">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex justify-between items-center">
           <div className="flex items-center space-x-3">
-            <button onClick={() => setIsMobileMenuOpen(true)} className="md:hidden text-white focus:outline-none p-1 hover:bg-brand-royal/30 rounded-lg transition">
+            <button onClick={() => setIsMobileMenuOpen(true)} className="md:hidden text-white focus:outline-none p-1 hover:bg-brand-royal/30 rounded-lg transition" aria-label="Open menu">
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
             </button>
             <div className="w-8 h-8 bg-brand-cyan rounded-lg flex items-center justify-center font-black text-brand-navy">A</div>
             <h1 className="text-xl font-bold tracking-wide">ACCESS Lingua <span className="text-brand-cyan font-light">Admin</span></h1>
           </div>
-          <button className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold transition shadow-md">Secure Logout</button>
+          <button onClick={handleLogout} className="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg text-sm font-bold transition shadow-md">Secure Logout</button>
         </div>
       </header>
 
@@ -129,7 +137,7 @@ function AdminDashboard() {
           <div className="absolute left-0 top-0 bottom-0 w-64 bg-white dark:bg-gray-800 shadow-2xl flex flex-col">
             <div className="p-4 flex justify-between items-center border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900">
               <p className="text-xs font-bold text-gray-400 uppercase tracking-wider">Administration</p>
-              <button onClick={() => setIsMobileMenuOpen(false)} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 p-1">
+              <button onClick={() => setIsMobileMenuOpen(false)} className="text-gray-500 hover:text-gray-700 dark:hover:text-gray-300 p-1" aria-label="Close menu">
                 <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
               </button>
             </div>
@@ -182,7 +190,6 @@ function AdminDashboard() {
                   ))}
                 </div>
 
-                {/* NEW: Visual Revenue Chart */}
                 <div className="bg-gray-50 dark:bg-gray-700/50 rounded-2xl p-6 border border-gray-100 dark:border-gray-600 mb-8">
                   <h3 className="font-bold text-brand-navy dark:text-white mb-6">Revenue Trend (Last 7 Days)</h3>
                   <div className="flex items-end justify-between space-x-2 h-40 pt-4">
@@ -202,7 +209,6 @@ function AdminDashboard() {
                   </div>
                 </div>
 
-                {/* NEW: Live Activity Feed */}
                 <div className="bg-blue-50 dark:bg-gray-700/50 border border-blue-100 dark:border-gray-600 rounded-xl p-6">
                   <h3 className="font-bold text-brand-navy dark:text-white mb-4 flex items-center">
                     <span className="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></span>
@@ -236,7 +242,6 @@ function AdminDashboard() {
                   </div>
                 </div>
 
-                {/* NEW: Bulk Action Bar */}
                 {selectedUsers.length > 0 && (
                   <div className="bg-brand-royal/10 dark:bg-brand-royal/20 border border-brand-royal/20 rounded-lg p-3 mb-4 flex items-center justify-between">
                     <span className="text-sm font-bold text-brand-royal">{selectedUsers.length} user(s) selected</span>
@@ -370,7 +375,6 @@ function AdminDashboard() {
                 <h2 className="text-2xl font-bold text-brand-navy dark:text-white mb-2">Review Moderation</h2>
                 <p className="text-gray-500 dark:text-gray-400 mb-6">Approve or reject customer testimonials before they appear on the public site.</p>
                 
-                {/* NEW: Bulk Action Bar for Reviews */}
                 {selectedReviews.length > 0 && (
                   <div className="bg-brand-royal/10 dark:bg-brand-royal/20 border border-brand-royal/20 rounded-lg p-3 mb-4 flex items-center justify-between">
                     <span className="text-sm font-bold text-brand-royal">{selectedReviews.length} review(s) selected</span>
